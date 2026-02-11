@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TalentFlow (recruit-ai)
+
+AI-powered candidate screening pipeline. Upload a resume, paste a job description, and get instant AI analysis.
+
+**Live:** [recruit.elunari.uk](https://recruit.elunari.uk)
+
+## Features
+
+- **Resume Parsing** — Extracts structured data (contact, skills, experience, education) from PDF/TXT
+- **6-Axis Scoring** — Evaluates candidate fit against a job description across multiple dimensions
+- **Interview Questions** — Generates tailored screening questions based on gaps and strengths
+- **Summary View** — Combined overview of score + questions with clickable navigation
+- **Auto-Pilot** — One-click full pipeline execution with JD templates
+- **History** — Local storage of past analyses with instant reload
+- **PDF Export** — Download complete analysis reports
+- **Mobile-First** — Responsive design with descriptive step icons
+
+## Tech Stack
+
+- Next.js 16, React 19, TypeScript
+- Framer Motion (animations)
+- OpenRouter (LLM API — Llama 3.3 70B, Gemma 3 27B, Mistral Small 3.1)
+- Tailwind CSS 4
+- Vercel (hosting)
+- Cloudflare (DNS)
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Set `OPENROUTER_API_KEY` in your environment.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open [http://localhost:3000](http://localhost:3000).

@@ -52,7 +52,7 @@ export interface Candidate {
 }
 
 export interface PipelineState {
-  step: "upload" | "parsing" | "parsed" | "scoring" | "scored" | "generating" | "complete";
+  step: "upload" | "parsing" | "parsed" | "scoring" | "scored" | "generating" | "complete" | "summary";
   resumeText?: string;
   parsedResume?: ParsedResume;
   scoring?: ScoringResult;

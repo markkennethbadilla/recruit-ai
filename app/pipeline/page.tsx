@@ -38,6 +38,7 @@ import {
   Check,
   Play,
   LayoutTemplate,
+  ClipboardList,
 } from "lucide-react";
 import type {
   ParsedResume,
@@ -87,6 +88,7 @@ const steps = [
   { id: "parse", label: "Parse", icon: Brain, color: "blue" },
   { id: "score", label: "Score", icon: BarChart3, color: "cyan" },
   { id: "questions", label: "Questions", icon: MessageSquareText, color: "green" },
+  { id: "summary", label: "Summary", icon: ClipboardList, color: "amber" },
 ];
 
 function ScoreRing({ score, size = 140 }: { score: number; size?: number }) {
@@ -219,7 +221,30 @@ export default function PipelinePage() {
       ? 1
       : state.step === "scoring" || state.step === "scored"
       ? 2
-      : 3;
+      : state.step === "generating" || state.step === "complete"
+      ? 3
+      : 4; // summary
+
+  function navigateToStep(stepIndex: number) {
+    if (stepIndex >= currentStepIndex) return; // can only go back
+    switch (stepIndex) {
+      case 0:
+        resetPipeline();
+        break;
+      case 1:
+        if (parsedResume) setState({ step: "parsed", parsedResume, resumeText: state.resumeText });
+        break;
+      case 2:
+        if (scoring) setState((s) => ({ ...s, step: "scored", scoring }));
+        break;
+      case 3:
+        if (questions.length > 0) setState((s) => ({ ...s, step: "complete", screeningQuestions: questions }));
+        break;
+      case 4:
+        if (questions.length > 0 && scoring) setState((s) => ({ ...s, step: "summary" }));
+        break;
+    }
+  }
 
   async function handleParse() {
     if (!file) return;
@@ -285,7 +310,7 @@ export default function PipelinePage() {
       if (!res.ok) throw new Error(data.error);
 
       setQuestions(data.questions);
-      setState((s) => ({ ...s, step: "complete", screeningQuestions: data.questions }));
+      setState((s) => ({ ...s, step: "summary", screeningQuestions: data.questions }));
 
       // Save to history
       if (parsedResume) {
@@ -362,7 +387,7 @@ export default function PipelinePage() {
       const qData = await qRes.json();
       if (!qRes.ok) throw new Error(qData.error);
       setQuestions(qData.questions);
-      setState({ step: "complete", screeningQuestions: qData.questions, scoring: scoringResult, parsedResume: parsed });
+      setState({ step: "summary", screeningQuestions: qData.questions, scoring: scoringResult, parsedResume: parsed });
 
       // Save to history
       saveToHistory({
@@ -398,7 +423,7 @@ export default function PipelinePage() {
     setJobDescription(entry.jobDescription);
     setModel(MODELS.find((m) => m.id === entry.model)?.id || MODELS[0].id);
     if (entry.questions.length > 0) {
-      setState({ step: "complete", screeningQuestions: entry.questions, scoring: entry.scoring ?? undefined, parsedResume: entry.parsedResume });
+      setState({ step: "summary", screeningQuestions: entry.questions, scoring: entry.scoring ?? undefined, parsedResume: entry.parsedResume });
     } else if (entry.scoring) {
       setState({ step: "scored", scoring: entry.scoring, parsedResume: entry.parsedResume });
     } else {
@@ -604,6 +629,7 @@ export default function PipelinePage() {
             {steps.map((s, i) => {
               const isActive = i === currentStepIndex;
               const isDone = i < currentStepIndex;
+              const isClickable = isDone;
               return (
                 <div key={s.id} className="flex items-center">
                   <motion.div
@@ -613,13 +639,12 @@ export default function PipelinePage() {
                     }}
                     className={cn(
                       "flex items-center gap-1.5 sm:gap-2.5 px-3 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium transition-all duration-300",
+                      isClickable && "cursor-pointer hover:scale-105 hover:brightness-125"
                     )}
+                    onClick={() => isClickable && navigateToStep(i)}
+                    title={isDone ? `Go back to ${s.label}` : undefined}
                   >
-                    {isDone ? (
-                      <CheckCircle2 className="w-4 h-4" />
-                    ) : (
-                      <s.icon className="w-4 h-4" />
-                    )}
+                    <s.icon className="w-4 h-4" />
                     <span className={cn("transition-opacity", isActive ? "opacity-100" : "opacity-60 hidden md:inline")}>
                       {s.label}
                     </span>
@@ -820,7 +845,7 @@ export default function PipelinePage() {
                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">Auto-Pilot Running</h2>
                 <p className="text-[var(--text-secondary)]">Full pipeline executing automatically</p>
               </div>
-              <div className="glass-card p-5 sm:p-6 space-y-4 sm:space-y-5">
+              <div className="glass-card p-5 sm:p-6 space-y-4 sm:space-y-5 mb-6">
                 {["Parsing resume...", "Scoring candidate fit...", "Generating interview questions...", "Complete!"].map((label, i) => {
                   const isActive = autoPilotStatus === label;
                   const isDone = ["Parsing resume...", "Scoring candidate fit...", "Generating interview questions...", "Complete!"].indexOf(autoPilotStatus) > i;
@@ -1227,7 +1252,7 @@ export default function PipelinePage() {
             </motion.div>
           )}
 
-           {/* STEP 5: Final Questions */}
+           {/* STEP 5: Questions */}
            {state.step === "complete" && questions.length > 0 && (
               <motion.div
                 key="questions"
@@ -1239,13 +1264,6 @@ export default function PipelinePage() {
                   <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2">Tailored Interview Guide</h2>
                   <p className="text-[var(--text-secondary)] text-sm sm:text-base">Based on the candidate's specific profile and gaps.</p>
                   <div className="flex items-center justify-center gap-2 sm:gap-3 mt-3 sm:mt-4 flex-wrap">
-                    <button
-                      onClick={handleExportPDF}
-                      className="flex items-center gap-2 px-5 py-2.5 glass-card-solid hover:border-purple-500/30 transition-all text-sm font-medium text-[var(--text-secondary)] hover:text-white"
-                    >
-                      <Download className="w-4 h-4" />
-                      Export PDF
-                    </button>
                     <button
                       onClick={copyQuestionsToClipboard}
                       className="flex items-center gap-2 px-5 py-2.5 glass-card-solid hover:border-green-500/30 transition-all text-sm font-medium text-[var(--text-secondary)] hover:text-white"
@@ -1285,12 +1303,190 @@ export default function PipelinePage() {
                 </div>
                 
                 <div className="mt-6 sm:mt-8 text-center pb-6 sm:pb-10 flex flex-col items-center gap-4">
-                   <button 
-                     onClick={resetPipeline}
-                     className="px-10 py-4 rounded-full border border-white/10 hover:bg-white/5 transition-all text-sm font-medium"
+                   <motion.button
+                     initial={{ opacity: 0, y: 10 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     onClick={() => setState((s) => ({ ...s, step: "summary" }))}
+                     className="flex items-center gap-2 sm:gap-3 px-7 py-3.5 sm:px-10 sm:py-4 bg-gradient-to-r from-amber-600 to-orange-600 rounded-full font-bold text-white hover:from-amber-500 hover:to-orange-500 transition-all shadow-xl shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-105 text-sm sm:text-base"
                    >
-                     Start New Candidate
-                   </button>
+                     <ClipboardList className="w-5 h-5" />
+                     View Summary
+                     <ArrowRight className="w-5 h-5" />
+                   </motion.button>
+                </div>
+              </motion.div>
+           )}
+
+           {/* STEP 6: Summary - Combined Score + Questions Overview */}
+           {state.step === "summary" && scoring && questions.length > 0 && (
+              <motion.div
+                key="summary"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-4xl mx-auto"
+              >
+                <div className="text-center mb-5 sm:mb-6">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text text-transparent">Candidate Summary</h2>
+                  <p className="text-[var(--text-secondary)] text-sm sm:text-base">Complete analysis overview — click sections to review details.</p>
+                </div>
+
+                {/* Score Summary Card - Clickable */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  onClick={() => setState((s) => ({ ...s, step: "scored" }))}
+                  className="glass-card p-5 sm:p-6 md:p-8 mb-4 sm:mb-6 cursor-pointer hover:border-purple-500/30 hover:bg-white/[0.03] transition-all group"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-500/20 rounded-lg text-purple-300">
+                        <BarChart3 className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-lg font-bold text-white">Score Results</h3>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] group-hover:text-purple-300 transition-colors">
+                      <span>View details</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-6">
+                    <div className="scale-75 sm:scale-90">
+                      <ScoreRing score={scoring.overallScore} size={120} />
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <div className={cn(
+                        "inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border",
+                        scoring.recommendation === "strong_match"
+                          ? "bg-green-500/10 text-green-400 border-green-500/20"
+                          : scoring.recommendation === "potential_match"
+                          ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                          : "bg-red-500/10 text-red-400 border-red-500/20"
+                      )}>
+                        {scoring.recommendation === "strong_match" && <CheckCircle2 className="w-3 h-3" />}
+                        {scoring.recommendation === "strong_match"
+                          ? "STRONGLY RECOMMENDED"
+                          : scoring.recommendation === "potential_match"
+                          ? "POTENTIAL MATCH"
+                          : "NOT RECOMMENDED"}
+                      </div>
+                      <p className="text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-3">{scoring.summary}</p>
+                      <div className="flex flex-wrap gap-3 mt-2">
+                        {scoring.breakdown.slice(0, 4).map((item, i) => (
+                          <div key={i} className="flex items-center gap-1.5 text-xs">
+                            <div className={cn(
+                              "w-2 h-2 rounded-full",
+                              item.score >= 8 ? "bg-green-400" : item.score >= 5 ? "bg-amber-400" : "bg-red-400"
+                            )} />
+                            <span className="text-[var(--text-muted)]">{item.category}</span>
+                            <span className="font-mono font-semibold text-white">{item.score}/{item.maxScore}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Questions Summary Card - Clickable */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  onClick={() => setState((s) => ({ ...s, step: "complete" }))}
+                  className="glass-card p-5 sm:p-6 md:p-8 mb-4 sm:mb-6 cursor-pointer hover:border-green-500/30 hover:bg-white/[0.03] transition-all group"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-500/20 rounded-lg text-green-300">
+                        <MessageSquareText className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-lg font-bold text-white">Interview Questions</h3>
+                      <span className="text-xs bg-white/5 px-2 py-0.5 rounded-full text-[var(--text-muted)]">{questions.length} questions</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] group-hover:text-green-300 transition-colors">
+                      <span>View all</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {questions.slice(0, 3).map((q, i) => (
+                      <div key={i} className="flex items-start gap-3 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/5">
+                        <span className="text-xs font-mono text-[var(--text-muted)] mt-0.5">Q{i + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-white truncate">{q.question}</p>
+                          <span className={cn(
+                            "text-[10px] font-bold uppercase mt-1 inline-block",
+                            q.difficulty === "hard" ? "text-red-400" : q.difficulty === "medium" ? "text-amber-400" : "text-green-400"
+                          )}>{q.difficulty}</span>
+                        </div>
+                      </div>
+                    ))}
+                    {questions.length > 3 && (
+                      <p className="text-xs text-[var(--text-muted)] text-center pt-1">+ {questions.length - 3} more questions</p>
+                    )}
+                  </div>
+                </motion.div>
+
+                {/* Strengths & Gaps Quick View */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8"
+                >
+                  <div className="glass-card p-5 sm:p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <TrendingUp className="w-4 h-4 text-green-400" />
+                      <h4 className="font-bold text-sm">Key Strengths</h4>
+                    </div>
+                    <ul className="space-y-2">
+                      {scoring.strengths.slice(0, 3).map((s, i) => (
+                        <li key={i} className="text-xs text-[var(--text-secondary)] flex gap-2 leading-relaxed">
+                          <CheckCircle2 className="w-3 h-3 text-green-400 shrink-0 mt-0.5" />
+                          {s}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="glass-card p-5 sm:p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <TrendingDown className="w-4 h-4 text-amber-400" />
+                      <h4 className="font-bold text-sm">Potential Gaps</h4>
+                    </div>
+                    <ul className="space-y-2">
+                      {scoring.gaps.slice(0, 3).map((g, i) => (
+                        <li key={i} className="text-xs text-[var(--text-secondary)] flex gap-2 leading-relaxed">
+                          <Target className="w-3 h-3 text-amber-400 shrink-0 mt-0.5" />
+                          {g}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </motion.div>
+
+                {/* Actions */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pb-6 sm:pb-10">
+                  <button
+                    onClick={handleExportPDF}
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full font-bold text-white hover:from-purple-500 hover:to-blue-500 transition-all shadow-lg shadow-purple-500/20 hover:scale-105 text-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export Full Report
+                  </button>
+                  <button
+                    onClick={copyQuestionsToClipboard}
+                    className="flex items-center gap-2 px-6 py-3 glass-card-solid hover:border-green-500/30 transition-all text-sm font-medium text-[var(--text-secondary)] hover:text-white rounded-full"
+                  >
+                    {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                    {copied ? "Copied!" : "Copy Questions"}
+                  </button>
+                  <button
+                    onClick={resetPipeline}
+                    className="flex items-center gap-2 px-6 py-3 rounded-full border border-white/10 hover:bg-white/5 transition-all text-sm font-medium"
+                  >
+                    Start New Candidate
+                  </button>
                 </div>
               </motion.div>
            )}
