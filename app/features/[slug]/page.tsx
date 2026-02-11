@@ -91,7 +91,7 @@ const featureData: Record<string, FeatureDetail> = {
     ],
     techHighlights: [
       "Supports PDF parsing via pdf-parse library with fallback handling",
-      "LLM-powered entity extraction using configurable models (Gemini, GPT-4o, Claude)",
+      "LLM-powered entity extraction using free models (Gemini 2.0 Flash, GPT-4o Mini, Claude Haiku)",
       "Handles messy formatting, tables, columns, and non-standard layouts",
       "Extracts skills as individual tags for granular matching",
       "Groups experience entries with company, title, duration, and bullet highlights",

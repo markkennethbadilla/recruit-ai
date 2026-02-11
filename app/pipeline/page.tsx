@@ -50,13 +50,15 @@ import { getHistory, saveToHistory, deleteFromHistory, clearHistory, type Histor
 import { exportPDFReport } from "@/lib/pdf-export";
 import { JD_TEMPLATES } from "@/lib/jd-templates";
 
+// Free models shown in UI
 const MODELS = [
   { id: "google/gemini-2.0-flash-001", name: "Gemini 2.0 Flash", speed: "Fast" },
   { id: "openai/gpt-4o-mini", name: "GPT-4o Mini", speed: "Fast" },
-  { id: "openai/gpt-4o", name: "GPT-4o", speed: "Balanced" },
-  { id: "anthropic/claude-sonnet-4", name: "Claude Sonnet 4", speed: "Balanced" },
-  { id: "deepseek/deepseek-r1", name: "DeepSeek R1", speed: "Thinking..." },
+  { id: "anthropic/claude-3.5-haiku", name: "Claude 3.5 Haiku", speed: "Balanced" },
 ];
+
+// Paid fallback (not user-selectable, used automatically on rate limits)
+export const FALLBACK_MODEL = "openai/gpt-4o";
 
 const SAMPLE_JD = `AI Engineer — WeAssist.io (Internal)
 
