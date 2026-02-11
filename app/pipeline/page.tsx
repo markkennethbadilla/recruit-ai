@@ -29,6 +29,7 @@ import {
   TrendingUp,
   TrendingDown,
   HelpCircle,
+  Zap,
 } from "lucide-react";
 import type {
   ParsedResume,
@@ -43,6 +44,7 @@ const MODELS = [
   { id: "openai/gpt-4o-mini", name: "GPT-4o Mini", speed: "Fast" },
   { id: "openai/gpt-4o", name: "GPT-4o", speed: "Balanced" },
   { id: "anthropic/claude-sonnet-4", name: "Claude Sonnet 4", speed: "Balanced" },
+  { id: "deepseek/deepseek-r1", name: "DeepSeek R1", speed: "Thinking..." },
 ];
 
 const SAMPLE_JD = `AI Engineer — WeAssist.io (Internal)
@@ -74,7 +76,7 @@ const steps = [
   { id: "questions", label: "Questions", icon: MessageSquareText, color: "green" },
 ];
 
-function ScoreRing({ score, size = 120 }: { score: number; size?: number }) {
+function ScoreRing({ score, size = 140 }: { score: number; size?: number }) {
   const radius = (size - 12) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
@@ -87,14 +89,20 @@ function ScoreRing({ score, size = 120 }: { score: number; size?: number }) {
 
   return (
     <div className="relative inline-flex items-center justify-center">
-      <svg width={size} height={size} className="-rotate-90">
+      {/* Glow behind */}
+      <div 
+        className="absolute inset-0 rounded-full blur-xl opacity-20"
+        style={{ backgroundColor: color }} 
+      />
+      
+      <svg width={size} height={size} className="-rotate-90 relative z-10">
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="rgba(255,255,255,0.08)"
-          strokeWidth="8"
+          stroke="rgba(255,255,255,0.05)"
+          strokeWidth="10"
         />
         <motion.circle
           cx={size / 2}
@@ -102,25 +110,25 @@ function ScoreRing({ score, size = 120 }: { score: number; size?: number }) {
           r={radius}
           fill="none"
           stroke={color}
-          strokeWidth="8"
+          strokeWidth="10"
           strokeLinecap="round"
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1.5, ease: "easeInOut" }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
         />
       </svg>
-      <div className="absolute flex flex-col items-center">
+      <div className="absolute flex flex-col items-center z-20">
         <motion.span
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5 }}
-          className="text-3xl font-bold"
+          className="text-4xl font-bold tracking-tight"
           style={{ color }}
         >
           {score}
         </motion.span>
-        <span className="text-xs text-[var(--text-muted)]">/ 100</span>
+        <span className="text-xs text-[var(--text-muted)] font-medium uppercase tracking-wider">/ 100</span>
       </div>
     </div>
   );
@@ -131,20 +139,20 @@ function LoadingState({ message }: { message: string }) {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex flex-col items-center justify-center py-20 gap-6"
+      className="flex flex-col items-center justify-center py-32 gap-8"
     >
       <div className="relative">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center">
-          <Loader2 className="w-10 h-10 text-purple-400 animate-spin" />
+        <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center shadow-lg shadow-purple-500/10">
+          <Loader2 className="w-12 h-12 text-purple-400 animate-spin" />
         </div>
-        <div className="absolute -inset-2 rounded-2xl bg-purple-500/10 animate-ping" />
+        <div className="absolute -inset-4 rounded-3xl bg-purple-500/5 animate-ping" />
       </div>
-      <div>
-        <p className="text-lg font-medium text-center">{message}</p>
-        <div className="flex justify-center gap-1.5 mt-3">
-          <div className="w-2 h-2 rounded-full bg-purple-400 loading-dot" />
-          <div className="w-2 h-2 rounded-full bg-blue-400 loading-dot" />
-          <div className="w-2 h-2 rounded-full bg-cyan-400 loading-dot" />
+      <div className="text-center space-y-4">
+        <p className="text-xl font-medium text-white">{message}</p>
+        <div className="flex justify-center gap-2">
+          <div className="w-2.5 h-2.5 rounded-full bg-purple-400 loading-dot" />
+          <div className="w-2.5 h-2.5 rounded-full bg-blue-400 loading-dot" />
+          <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 loading-dot" />
         </div>
       </div>
     </motion.div>
@@ -269,74 +277,85 @@ export default function PipelinePage() {
   const selectedModel = MODELS.find((m) => m.id === model)!;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20 selection:bg-purple-500/30">
+      <div className="gradient-bg opacity-50" />
+      
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass-card border-x-0 border-t-0 rounded-none px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <ArrowLeft className="w-4 h-4 text-[var(--text-muted)]" />
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-lg">TalentFlow</span>
-            <span className="text-purple-400 text-sm font-mono">AI</span>
-          </Link>
-
-          {/* Model selector */}
-          <div className="relative">
-            <button
-              onClick={() => setShowModelDropdown(!showModelDropdown)}
-              className="flex items-center gap-2 px-4 py-2 glass-card hover:border-purple-500/30 transition-all text-sm"
-            >
-              <Brain className="w-4 h-4 text-purple-400" />
-              <span>{selectedModel.name}</span>
-              <ChevronDown className="w-3 h-3 text-[var(--text-muted)]" />
-            </button>
-            {showModelDropdown && (
-              <div className="absolute right-0 top-full mt-2 w-56 glass-card-solid p-2 shadow-xl z-50">
-                {MODELS.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => {
-                      setModel(m.id);
-                      setShowModelDropdown(false);
-                    }}
-                    className={cn(
-                      "w-full text-left px-3 py-2 rounded-lg text-sm flex justify-between items-center",
-                      model === m.id
-                        ? "bg-purple-500/20 text-purple-300"
-                        : "hover:bg-white/5 text-[var(--text-secondary)]"
-                    )}
-                  >
-                    <span>{m.name}</span>
-                    <span className="text-xs text-[var(--text-muted)]">{m.speed}</span>
-                  </button>
-                ))}
+      <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-5 transition-all duration-300">
+        <div className="max-w-7xl mx-auto">
+          <div className="glass-card px-8 py-4 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity group">
+              <div className="p-1.5 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors">
+                <ArrowLeft className="w-4 h-4 text-[var(--text-muted)] group-hover:text-white" />
               </div>
-            )}
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <span className="font-bold text-lg">TalentFlow</span>
+              </div>
+            </Link>
+
+            {/* Model selector */}
+            <div className="relative">
+              <button
+                onClick={() => setShowModelDropdown(!showModelDropdown)}
+                className="flex items-center gap-3 px-5 py-2.5 glass-card-solid hover:border-purple-500/30 transition-all text-sm group"
+              >
+                <Brain className="w-4 h-4 text-purple-400 group-hover:text-purple-300" />
+                <span>{selectedModel.name}</span>
+                <ChevronDown className={`w-3 h-3 text-[var(--text-muted)] transition-transform duration-300 ${showModelDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              <AnimatePresence>
+                {showModelDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute right-0 top-full mt-3 w-72 glass-card-solid p-3 shadow-xl z-50 overflow-hidden"
+                  >
+                    {MODELS.map((m) => (
+                      <button
+                        key={m.id}
+                        onClick={() => {
+                          setModel(m.id);
+                          setShowModelDropdown(false);
+                        }}
+                        className={cn(
+                          "w-full text-left px-4 py-3 rounded-xl text-sm flex justify-between items-center transition-colors",
+                          model === m.id
+                            ? "bg-purple-500/20 text-purple-300"
+                            : "hover:bg-white/5 text-[var(--text-secondary)] hover:text-white"
+                        )}
+                      >
+                        <span className="font-medium">{m.name}</span>
+                        <span className="text-xs text-[var(--text-muted)] opacity-70">{m.speed}</span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-6xl mx-auto px-6 pt-28 pb-20">
+      <div className="max-w-6xl mx-auto px-6 pt-40">
         {/* Progress steps */}
-        <div className="flex justify-center mb-12">
-          <div className="flex items-center gap-2">
+        <div className="flex justify-center mb-16">
+          <div className="flex items-center bg-white/5 p-2.5 rounded-full border border-white/5 backdrop-blur-md">
             {steps.map((s, i) => {
               const isActive = i === currentStepIndex;
               const isDone = i < currentStepIndex;
               return (
-                <div key={s.id} className="flex items-center gap-2">
+                <div key={s.id} className="flex items-center">
                   <motion.div
                     animate={{
-                      scale: isActive ? 1.1 : 1,
-                      opacity: isDone || isActive ? 1 : 0.4,
+                      backgroundColor: isActive ? "rgba(139, 92, 246, 0.2)" : isDone ? "rgba(16, 185, 129, 0.2)" : "transparent",
+                      color: isActive ? "#d8b4fe" : isDone ? "#6ee7b7" : "#64748b",
                     }}
                     className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors",
-                      isActive && "bg-purple-500/20 text-purple-300 border border-purple-500/40",
-                      isDone && "bg-green-500/20 text-green-300 border border-green-500/40",
-                      !isActive && !isDone && "text-[var(--text-muted)]"
+                      "flex items-center gap-2.5 px-6 py-3 rounded-full text-sm font-medium transition-all duration-300",
                     )}
                   >
                     {isDone ? (
@@ -344,15 +363,12 @@ export default function PipelinePage() {
                     ) : (
                       <s.icon className="w-4 h-4" />
                     )}
-                    <span className="hidden sm:inline">{s.label}</span>
+                    <span className={cn("transition-opacity", isActive ? "opacity-100" : "opacity-60 hidden sm:inline")}>
+                      {s.label}
+                    </span>
                   </motion.div>
                   {i < steps.length - 1 && (
-                    <div
-                      className={cn(
-                        "w-8 h-0.5 rounded",
-                        isDone ? "bg-green-500/50" : "bg-[var(--border)]"
-                      )}
-                    />
+                    <div className="w-8 h-px bg-white/10 mx-1" />
                   )}
                 </div>
               );
@@ -364,16 +380,21 @@ export default function PipelinePage() {
         <AnimatePresence>
           {state.error && (
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center gap-3"
+              initial={{ opacity: 0, y: -20, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: "auto" }}
+              exit={{ opacity: 0, y: -20, height: 0 }}
+              className="mb-8 overflow-hidden"
             >
-              <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-              <p className="text-red-300 text-sm flex-1">{state.error}</p>
-              <button onClick={() => setState((s) => ({ ...s, error: undefined }))}>
-                <X className="w-4 h-4 text-red-400" />
-              </button>
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+                <p className="text-red-200 text-sm flex-1 font-medium">{state.error}</p>
+                <button 
+                  onClick={() => setState((s) => ({ ...s, error: undefined }))}
+                  className="p-1 hover:bg-red-500/20 rounded-lg transition-colors"
+                >
+                  <X className="w-4 h-4 text-red-400" />
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -383,70 +404,80 @@ export default function PipelinePage() {
           {state.step === "upload" && (
             <motion.div
               key="upload"
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 30 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.4 }}
+              className="max-w-2xl mx-auto"
             >
-              <div className="max-w-2xl mx-auto">
-                <h2 className="text-2xl font-bold mb-2 text-center">Upload Resume</h2>
-                <p className="text-[var(--text-secondary)] text-center mb-8">
-                  Drop a PDF or TXT resume to start the AI pipeline
+              <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold mb-5 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Upload Candidate Resume</h2>
+                <p className="text-lg text-[var(--text-secondary)] leading-relaxed">
+                  Supports PDF and TXT formats. AI will parse details automatically.
                 </p>
+              </div>
 
-                <div
-                  {...getRootProps()}
-                  className={cn(
-                    "glass-card-solid p-12 cursor-pointer transition-all duration-300 text-center group",
-                    isDragActive
-                      ? "border-purple-500/50 glow-purple"
-                      : "hover:border-purple-500/30"
-                  )}
-                >
-                  <input {...getInputProps()} />
-                  <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                    <Upload className="w-8 h-8 text-purple-400" />
+              <div
+                {...getRootProps()}
+                className={cn(
+                  "relative glass-card p-16 cursor-pointer transition-all duration-300 text-center group overflow-hidden",
+                  isDragActive
+                    ? "border-purple-500/50 shadow-[0_0_50px_rgba(168,85,247,0.2)] bg-purple-500/5"
+                    : "hover:border-purple-500/30 hover:bg-white/[0.02]"
+                )}
+              >
+                <input {...getInputProps()} />
+                
+                {/* Background pulse effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className={cn(
+                    "w-24 h-24 rounded-3xl flex items-center justify-center mb-8 transition-all duration-500 shadow-xl",
+                    isDragActive ? "bg-purple-500 text-white scale-110" : "bg-purple-500/10 text-purple-400 group-hover:scale-110 group-hover:bg-purple-500/20"
+                  )}>
+                    <Upload className="w-10 h-10" />
                   </div>
+                  
                   {file ? (
-                    <div>
-                      <div className="flex items-center justify-center gap-2 mb-2">
+                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+                      <div className="flex items-center justify-center gap-3 mb-3 px-5 py-3 bg-green-500/10 rounded-xl inline-flex border border-green-500/20">
                         <FileText className="w-5 h-5 text-green-400" />
-                        <span className="font-medium text-green-300">{file.name}</span>
+                        <span className="font-semibold text-green-300">{file.name}</span>
                       </div>
                       <p className="text-sm text-[var(--text-muted)]">
-                        {(file.size / 1024).toFixed(1)} KB — Click or drop to change
+                        {(file.size / 1024).toFixed(1)} KB — Click or drop to replace
                       </p>
-                    </div>
+                    </motion.div>
                   ) : (
-                    <div>
-                      <p className="text-lg mb-2">
-                        {isDragActive
-                          ? "Drop the file here..."
-                          : "Drag & drop a resume here"}
+                    <div className="text-center">
+                      <p className="text-xl font-medium mb-3 text-white">
+                        {isDragActive ? "Drop the resume here..." : "Drag & drop resume here"}
                       </p>
-                      <p className="text-sm text-[var(--text-muted)]">
-                        PDF or TXT • Max 10MB
+                      <p className="text-[var(--text-muted)]">
+                        or click to browse files (Max 10MB)
                       </p>
                     </div>
                   )}
                 </div>
+              </div>
 
-                {file && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-6 flex justify-center"
-                  >
-                    <button
+              <div className="mt-8 flex justify-center h-14">
+                <AnimatePresence>
+                  {file && (
+                    <motion.button
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
                       onClick={handleParse}
-                      className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full font-semibold hover:from-purple-500 hover:to-blue-500 transition-all shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40"
+                      className="flex items-center gap-3 px-10 py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full font-bold text-white hover:from-purple-500 hover:to-blue-500 transition-all shadow-xl shadow-purple-500/25 hover:shadow-purple-500/40 hover:scale-105"
                     >
                       <Brain className="w-5 h-5" />
-                      Parse with AI
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </motion.div>
-                )}
+                      Analyze with AI
+                      <ArrowRight className="w-5 h-5" />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
           )}
@@ -459,7 +490,7 @@ export default function PipelinePage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <LoadingState message="AI is parsing the resume..." />
+              <LoadingState message="Extracting candidate intelligence..." />
             </motion.div>
           )}
 
@@ -467,198 +498,184 @@ export default function PipelinePage() {
           {(state.step === "parsed" || state.step === "scoring") && parsedResume && (
             <motion.div
               key="parsed"
-              initial={{ opacity: 0, x: -30 }}
+              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 30 }}
+              exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.4 }}
+              className="grid grid-cols-1 lg:grid-cols-2 gap-8"
             >
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left: Parsed Resume */}
-                <div className="glass-card-solid p-6 overflow-hidden">
-                  <div className="flex items-center gap-2 mb-6">
-                    <CheckCircle2 className="w-5 h-5 text-green-400" />
-                    <h3 className="text-lg font-semibold">Parsed Resume</h3>
+              {/* Left: Parsed Resume */}
+              <div className="glass-card overflow-hidden flex flex-col h-[700px]">
+                <div className="p-6 border-b border-[var(--border)] bg-white/[0.02] flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-500/20 rounded-lg text-purple-300">
+                      <User className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">{parsedResume.name}</h3>
+                      <p className="text-xs text-[var(--text-muted)]">Candidate Profile</p>
+                    </div>
+                  </div>
+                  <div className="px-3 py-1 bg-green-500/10 text-green-400 text-xs font-medium rounded-full border border-green-500/20">
+                    Parsed Successfully
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                  {/* Contact Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {parsedResume.email && (
+                      <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-white/5 border border-white/5">
+                        <Mail className="w-4 h-4 text-[var(--text-muted)] shrink-0" />
+                        <span className="text-sm truncate">{parsedResume.email}</span>
+                      </div>
+                    )}
+                    {parsedResume.phone && (
+                      <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-white/5 border border-white/5">
+                        <Phone className="w-4 h-4 text-[var(--text-muted)] shrink-0" />
+                        <span className="text-sm truncate">{parsedResume.phone}</span>
+                      </div>
+                    )}
+                    {parsedResume.location && (
+                      <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-white/5 border border-white/5 sm:col-span-2">
+                        <MapPin className="w-4 h-4 text-[var(--text-muted)] shrink-0" />
+                        <span className="text-sm truncate">{parsedResume.location}</span>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                    {/* Contact */}
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-purple-400" />
-                        <span className="font-medium">{parsedResume.name}</span>
-                      </div>
-                      {parsedResume.email && (
-                        <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                          <Mail className="w-3.5 h-3.5" />
-                          <span>{parsedResume.email}</span>
-                        </div>
-                      )}
-                      {parsedResume.phone && (
-                        <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                          <Phone className="w-3.5 h-3.5" />
-                          <span>{parsedResume.phone}</span>
-                        </div>
-                      )}
-                      {parsedResume.location && (
-                        <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                          <MapPin className="w-3.5 h-3.5" />
-                          <span>{parsedResume.location}</span>
-                        </div>
-                      )}
+                  {/* Summary */}
+                  {parsedResume.summary && (
+                    <div>
+                      <h4 className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold mb-3 flex items-center gap-2">
+                        <FileText className="w-3 h-3" /> Professional Summary
+                      </h4>
+                      <p className="text-sm text-[var(--text-secondary)] leading-relaxed p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                        {parsedResume.summary}
+                      </p>
                     </div>
+                  )}
 
-                    {/* Summary */}
-                    {parsedResume.summary && (
-                      <div>
-                        <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-1">
-                          Summary
-                        </p>
-                        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                          {parsedResume.summary}
-                        </p>
+                  {/* Skills */}
+                  {parsedResume.skills.length > 0 && (
+                    <div>
+                      <h4 className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold mb-3 flex items-center gap-2">
+                         <Zap className="w-3 h-3" /> Skills
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {parsedResume.skills.map((skill, i) => (
+                          <span
+                            key={i}
+                            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-purple-500/10 text-purple-300 border border-purple-500/20"
+                          >
+                            {skill}
+                          </span>
+                        ))}
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    {/* Skills */}
-                    {parsedResume.skills.length > 0 && (
-                      <div>
-                        <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">
-                          Skills
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {parsedResume.skills.map((skill, i) => (
-                            <span
-                              key={i}
-                              className="px-2 py-1 text-xs rounded-lg bg-purple-500/10 text-purple-300 border border-purple-500/20"
-                            >
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
+                  {/* Experience */}
+                  {parsedResume.experience.length > 0 && (
+                    <div>
+                      <h4 className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold mb-3 flex items-center gap-2">
+                        <Briefcase className="w-3 h-3" /> Experience
+                      </h4>
+                      <div className="space-y-4">
+                        {parsedResume.experience.map((exp, i) => (
+                          <div key={i} className="pl-5 border-l-2 border-white/10 relative">
+                             <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-blue-500/50" />
+                            <h5 className="font-semibold text-white">{exp.title}</h5>
+                            <p className="text-xs text-blue-300 mb-2">
+                              {exp.company} • {exp.duration}
+                            </p>
+                            {exp.highlights.length > 0 && (
+                              <ul className="space-y-1.5">
+                                {exp.highlights.map((h, j) => (
+                                  <li key={j} className="text-xs text-[var(--text-secondary)] pl-4 relative flex">
+                                    <span className="absolute left-0 top-1.5 w-1 h-1 bg-[var(--text-muted)] rounded-full" />
+                                    <span className="opacity-90 leading-relaxed">{h}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    {/* Experience */}
-                    {parsedResume.experience.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <Briefcase className="w-3.5 h-3.5 text-blue-400" />
-                          <p className="text-xs uppercase tracking-wider text-[var(--text-muted)]">
-                            Experience
-                          </p>
-                        </div>
-                        <div className="space-y-3">
-                          {parsedResume.experience.map((exp, i) => (
-                            <div key={i} className="pl-3 border-l-2 border-blue-500/30">
-                              <p className="font-medium text-sm">{exp.title}</p>
-                              <p className="text-xs text-[var(--text-muted)]">
-                                {exp.company} • {exp.duration}
-                              </p>
-                              {exp.highlights.length > 0 && (
-                                <ul className="mt-1 space-y-0.5">
-                                  {exp.highlights.map((h, j) => (
-                                    <li
-                                      key={j}
-                                      className="text-xs text-[var(--text-secondary)] flex gap-1"
-                                    >
-                                      <span className="text-blue-400 mt-0.5">•</span>
-                                      {h}
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Education */}
-                    {parsedResume.education.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <GraduationCap className="w-3.5 h-3.5 text-cyan-400" />
-                          <p className="text-xs uppercase tracking-wider text-[var(--text-muted)]">
-                            Education
-                          </p>
-                        </div>
+                  {/* Education */}
+                  {parsedResume.education.length > 0 && (
+                    <div>
+                      <h4 className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold mb-3 flex items-center gap-2">
+                        <GraduationCap className="w-3 h-3" /> Education
+                      </h4>
+                      <div className="space-y-3">
                         {parsedResume.education.map((edu, i) => (
-                          <div key={i} className="pl-3 border-l-2 border-cyan-500/30">
-                            <p className="text-sm font-medium">{edu.degree}</p>
+                          <div key={i} className="pl-5 border-l-2 border-white/10 relative">
+                            <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-cyan-500/50" />
+                            <p className="text-sm font-medium text-white">{edu.degree}</p>
                             <p className="text-xs text-[var(--text-muted)]">
                               {edu.institution} • {edu.year}
                             </p>
                           </div>
                         ))}
                       </div>
-                    )}
-
-                    {/* Certs */}
-                    {parsedResume.certifications.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <Award className="w-3.5 h-3.5 text-amber-400" />
-                          <p className="text-xs uppercase tracking-wider text-[var(--text-muted)]">
-                            Certifications
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {parsedResume.certifications.map((cert, i) => (
-                            <span
-                              key={i}
-                              className="px-2 py-1 text-xs rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20"
-                            >
-                              {cert}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
+              </div>
 
-                {/* Right: Job Description + Score Button */}
-                <div className="space-y-6">
-                  <div className="glass-card-solid p-6">
-                    <h3 className="text-lg font-semibold mb-4">Job Description</h3>
-                    <p className="text-sm text-[var(--text-secondary)] mb-3">
-                      Paste the job description to score this candidate against.
+              {/* Right: Job Description + Score Button */}
+              <div className="flex flex-col gap-6 h-[700px]">
+                <div className="glass-card p-6 flex-1 flex flex-col">
+                  <div className="pb-5 mb-5 border-b border-[var(--border)]">
+                    <h3 className="text-lg font-bold text-white mb-2">Target Job Description</h3>
+                    <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                      Paste the JD below to evaluate the candidate's fit.
                     </p>
+                  </div>
+                  <div className="flex-1 relative">
                     <textarea
                       value={jobDescription}
                       onChange={(e) => setJobDescription(e.target.value)}
-                      placeholder="Paste the job description here..."
-                      className="w-full h-48 bg-black/30 border border-[var(--border)] rounded-xl p-4 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-purple-500/50 resize-none"
+                      placeholder="Paste job title, responsibilities, and requirements here..."
+                      className="w-full h-full bg-white/[0.02] border-0 rounded-xl p-4 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-1 focus:ring-purple-500/50 resize-none leading-relaxed transition-all"
                     />
-                    <button
-                      onClick={() => setJobDescription(SAMPLE_JD)}
-                      className="mt-2 text-xs text-purple-400 hover:text-purple-300 transition-colors"
-                    >
-                      Load sample JD (WeAssist AI Engineer)
-                    </button>
+                    {!jobDescription && (
+                       <button
+                       onClick={() => setJobDescription(SAMPLE_JD)}
+                       className="absolute bottom-4 right-4 text-xs bg-purple-500/20 text-purple-300 px-4 py-2 rounded-lg hover:bg-purple-500/30 transition-colors border border-purple-500/30 font-medium"
+                     >
+                       Load Sample JD
+                     </button>
+                    )}
                   </div>
-
-                  {state.step === "scoring" ? (
-                    <LoadingState message="Scoring candidate..." />
-                  ) : (
-                    <motion.button
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      onClick={handleScore}
-                      disabled={!jobDescription.trim()}
-                      className={cn(
-                        "w-full flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold transition-all text-lg",
-                        jobDescription.trim()
-                          ? "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-lg shadow-cyan-500/20"
-                          : "bg-[var(--bg-card)] text-[var(--text-muted)] cursor-not-allowed"
-                      )}
-                    >
-                      <BarChart3 className="w-5 h-5" />
-                      Score Candidate
-                      <ArrowRight className="w-4 h-4" />
-                    </motion.button>
-                  )}
                 </div>
+
+                {state.step === "scoring" ? (
+                  <div className="glass-card p-8 flex items-center justify-center">
+                    <LoadingState message="Calculating 6-axis fit score..." />
+                  </div>
+                ) : (
+                  <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onClick={handleScore}
+                    disabled={!jobDescription.trim()}
+                    className={cn(
+                      "w-full flex items-center justify-center gap-3 px-8 py-6 rounded-2xl font-bold transition-all text-xl shadow-lg",
+                      jobDescription.trim()
+                        ? "bg-gradient-to-r from-purple-600 to-blue-600 hover:scale-[1.02] active:scale-[0.98] text-white shadow-purple-500/20"
+                        : "bg-white/5 text-[var(--text-muted)] cursor-not-allowed"
+                    )}
+                  >
+                    <BarChart3 className="w-6 h-6" />
+                    Score Candidate Match
+                    <ArrowRight className="w-5 h-5" />
+                  </motion.button>
+                )}
               </div>
             </motion.div>
           )}
@@ -667,260 +684,204 @@ export default function PipelinePage() {
           {(state.step === "scored" || state.step === "generating") && scoring && (
             <motion.div
               key="scored"
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 30 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.4 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Score overview */}
-                <div className="glass-card-solid p-6 flex flex-col items-center justify-center">
-                  <h3 className="text-lg font-semibold mb-4">Match Score</h3>
-                  <ScoreRing score={scoring.overallScore} />
-                  <div className="mt-4">
-                    <span
-                      className={cn(
-                        "px-3 py-1 rounded-full text-sm font-medium",
-                        scoring.recommendation === "strong_match"
-                          ? "bg-green-500/20 text-green-300"
-                          : scoring.recommendation === "potential_match"
-                          ? "bg-amber-500/20 text-amber-300"
-                          : "bg-red-500/20 text-red-300"
-                      )}
-                    >
-                      {scoring.recommendation === "strong_match"
-                        ? "Strong Match"
+              {/* Score overview - Large Card */}
+              <div className="glass-card p-10 flex flex-col items-center justify-center text-center relative overflow-hidden group">
+                 <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent transition-opacity group-hover:from-purple-500/10" />
+                 
+                <h3 className="text-sm font-bold mb-8 text-[var(--text-secondary)] uppercase tracking-wider">Overall Fit Score</h3>
+                <div className="mb-8 scale-110">
+                   <ScoreRing score={scoring.overallScore} size={180} />
+                </div>
+                
+                <div className="relative z-10 w-full">
+                  <div
+                    className={cn(
+                      "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold mb-4 border",
+                      scoring.recommendation === "strong_match"
+                        ? "bg-green-500/10 text-green-400 border-green-500/20"
                         : scoring.recommendation === "potential_match"
-                        ? "Potential Match"
-                        : "Weak Match"}
-                    </span>
+                        ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        : "bg-red-500/10 text-red-400 border-red-500/20"
+                    )}
+                  >   
+                     {scoring.recommendation === "strong_match" && <CheckCircle2 className="w-4 h-4" />}
+                    {scoring.recommendation === "strong_match"
+                      ? "STRONGLY RECOMMENDED"
+                      : scoring.recommendation === "potential_match"
+                      ? "POTENTIAL MATCH"
+                      : "NOT RECOMMENDED"}
                   </div>
-                  <p className="text-sm text-[var(--text-secondary)] mt-4 text-center leading-relaxed">
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed border-t border-white/10 pt-5 mt-4 px-2">
                     {scoring.summary}
                   </p>
                 </div>
+              </div>
 
-                {/* Score breakdown */}
-                <div className="glass-card-solid p-6">
-                  <h3 className="text-lg font-semibold mb-4">Breakdown</h3>
-                  <div className="space-y-3">
-                    {scoring.breakdown.map((item, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                      >
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>{item.category}</span>
-                          <span className="font-mono text-[var(--text-muted)]">
-                            {item.score}/{item.maxScore}
-                          </span>
-                        </div>
-                        <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{
-                              width: `${(item.score / item.maxScore) * 100}%`,
-                            }}
-                            transition={{ duration: 0.8, delay: i * 0.1 }}
-                            className={cn(
-                              "h-full rounded-full",
-                              item.score / item.maxScore >= 0.8
-                                ? "bg-green-500"
-                                : item.score / item.maxScore >= 0.6
-                                ? "bg-amber-500"
-                                : "bg-red-500"
-                            )}
-                          />
-                        </div>
-                        <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                          {item.reasoning}
-                        </p>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Strengths & Gaps */}
-                <div className="space-y-6">
-                  <div className="glass-card-solid p-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <TrendingUp className="w-4 h-4 text-green-400" />
-                      <h3 className="font-semibold">Strengths</h3>
-                    </div>
-                    <ul className="space-y-2">
-                      {scoring.strengths.map((s, i) => (
-                        <motion.li
-                          key={i}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: i * 0.1 }}
-                          className="text-sm text-[var(--text-secondary)] flex gap-2"
-                        >
-                          <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
-                          {s}
-                        </motion.li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="glass-card-solid p-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <TrendingDown className="w-4 h-4 text-amber-400" />
-                      <h3 className="font-semibold">Gaps</h3>
-                    </div>
-                    <ul className="space-y-2">
-                      {scoring.gaps.map((g, i) => (
-                        <motion.li
-                          key={i}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: i * 0.1 }}
-                          className="text-sm text-[var(--text-secondary)] flex gap-2"
-                        >
-                          <Target className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                          {g}
-                        </motion.li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {state.step === "generating" ? (
-                    <LoadingState message="Generating questions..." />
-                  ) : (
-                    <motion.button
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      onClick={handleGenerateQuestions}
-                      className="w-full flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl font-semibold hover:from-green-500 hover:to-emerald-500 transition-all shadow-lg shadow-green-500/20 text-lg"
+              {/* Score breakdown */}
+              <div className="glass-card p-8 flex flex-col">
+                 <h3 className="text-lg font-bold mb-6 flex items-center gap-3">
+                    <BarChart3 className="w-5 h-5 text-blue-400" /> Scoring Breakdown
+                 </h3>
+                <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                  {scoring.breakdown.map((item, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                      className="group"
                     >
-                      <MessageSquareText className="w-5 h-5" />
-                      Generate Screening Questions
-                      <ArrowRight className="w-4 h-4" />
-                    </motion.button>
-                  )}
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="font-medium text-white">{item.category}</span>
+                        <span className="font-mono text-[var(--text-muted)] group-hover:text-white transition-colors">
+                          {item.score}/10
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden mb-2">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{
+                            width: `${(item.score / item.maxScore) * 100}%`,
+                          }}
+                          transition={{ duration: 1, delay: 0.2 + i * 0.1, ease: "easeOut" }}
+                          className={cn(
+                            "h-full rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]",
+                            item.score >= 8
+                              ? "bg-gradient-to-r from-green-500 to-emerald-400"
+                              : item.score >= 5
+                              ? "bg-gradient-to-r from-amber-500 to-orange-400"
+                              : "bg-gradient-to-r from-red-500 to-pink-500"
+                          )}
+                        />
+                      </div>
+                      <p className="text-xs text-[var(--text-muted)] leading-relaxed mt-1">
+                        {item.reasoning}
+                      </p>
+                    </motion.div>
+                  ))}
                 </div>
+              </div>
+
+              {/* Strengths & Gaps */}
+              <div className="space-y-6 flex flex-col">
+                <div className="glass-card p-7 flex-1">
+                  <div className="flex items-center gap-3 mb-5">
+                    <TrendingUp className="w-5 h-5 text-green-400" />
+                    <h3 className="font-bold">Key Strengths</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {scoring.strengths.slice(0, 3).map((s, i) => (
+                      <motion.li
+                        key={i}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 + i * 0.1 }}
+                        className="text-sm text-[var(--text-secondary)] flex gap-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors leading-relaxed"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
+                        {s}
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="glass-card p-7 flex-1">
+                  <div className="flex items-center gap-3 mb-5">
+                    <TrendingDown className="w-5 h-5 text-amber-400" />
+                    <h3 className="font-bold">Potential Gaps</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {scoring.gaps.slice(0, 3).map((g, i) => (
+                      <motion.li
+                        key={i}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 + i * 0.1 }}
+                        className="text-sm text-[var(--text-secondary)] flex gap-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors leading-relaxed"
+                      >
+                        <Target className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                        {g}
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
+
+                {state.step === "generating" ? (
+                  <div className="glass-card p-4">
+                     <LoadingState message="Drafting interview guide..." />
+                  </div>
+                ) : (
+                  <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onClick={handleGenerateQuestions}
+                    className="w-full flex items-center justify-center gap-2 px-8 py-5 bg-gradient-to-r from-emerald-600 to-green-600 rounded-2xl font-bold hover:from-emerald-500 hover:to-green-500 transition-all shadow-lg shadow-emerald-500/20 text-white mt-auto hover:translate-y-[-2px]"
+                  >
+                    <MessageSquareText className="w-5 h-5" />
+                    Generate Questions
+                  </motion.button>
+                )}
               </div>
             </motion.div>
           )}
 
-          {/* STEP 5: Complete — Questions */}
-          {state.step === "complete" && questions.length > 0 && (
-            <motion.div
-              key="complete"
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4 }}
-            >
-              <div className="max-w-4xl mx-auto">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 text-green-300 border border-green-500/30 mb-4">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Pipeline Complete
-                  </div>
-                  <h2 className="text-2xl font-bold">
-                    Screening Questions for {parsedResume?.name}
-                  </h2>
-                  {scoring && (
-                    <p className="text-[var(--text-secondary)] mt-2">
-                      Match Score:{" "}
-                      <span
-                        className={cn(
-                          "font-bold",
-                          scoring.overallScore >= 80
-                            ? "text-green-400"
-                            : scoring.overallScore >= 60
-                            ? "text-amber-400"
-                            : "text-red-400"
-                        )}
-                      >
-                        {scoring.overallScore}/100
-                      </span>
-                    </p>
-                  )}
+           {/* STEP 5: Final Questions */}
+           {state.step === "complete" && questions.length > 0 && (
+              <motion.div
+                key="questions"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-4xl mx-auto"
+              >
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl font-bold mb-3">Tailored Interview Guide</h2>
+                  <p className="text-[var(--text-secondary)] text-lg">Based on the candidate's specific profile and gaps.</p>
                 </div>
 
-                <div className="space-y-4">
+                <div className="grid gap-6">
                   {questions.map((q, i) => (
-                    <motion.div
+                     <motion.div
                       key={i}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.08 }}
-                      className="glass-card-solid p-6"
+                      transition={{ delay: i * 0.05 }}
+                      className="glass-card p-8 border-l-4 border-l-purple-500"
                     >
-                      <div className="flex items-start gap-4">
-                        <div
-                          className={cn(
-                            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-bold",
-                            q.difficulty === "easy"
-                              ? "bg-green-500/20 text-green-400"
-                              : q.difficulty === "medium"
-                              ? "bg-amber-500/20 text-amber-400"
-                              : "bg-red-500/20 text-red-400"
-                          )}
-                        >
-                          {i + 1}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span
-                              className={cn(
-                                "px-2 py-0.5 rounded text-xs font-medium uppercase",
-                                q.difficulty === "easy"
-                                  ? "bg-green-500/10 text-green-400"
-                                  : q.difficulty === "medium"
-                                  ? "bg-amber-500/10 text-amber-400"
-                                  : "bg-red-500/10 text-red-400"
-                              )}
-                            >
-                              {q.difficulty}
-                            </span>
-                          </div>
-                          <p className="font-medium mb-3">{q.question}</p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/10">
-                              <div className="flex items-center gap-1.5 mb-1">
-                                <HelpCircle className="w-3.5 h-3.5 text-blue-400" />
-                                <span className="text-xs font-medium text-blue-400">
-                                  Purpose
-                                </span>
-                              </div>
-                              <p className="text-xs text-[var(--text-secondary)]">
-                                {q.purpose}
-                              </p>
-                            </div>
-                            <div className="p-3 rounded-lg bg-green-500/5 border border-green-500/10">
-                              <div className="flex items-center gap-1.5 mb-1">
-                                <Target className="w-3.5 h-3.5 text-green-400" />
-                                <span className="text-xs font-medium text-green-400">
-                                  Look For
-                                </span>
-                              </div>
-                              <p className="text-xs text-[var(--text-secondary)]">
-                                {q.lookFor}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
+                      <div className="flex justify-between items-start mb-4">
+                         <span className="px-3 py-1.5 bg-purple-500/10 text-purple-300 text-xs font-bold rounded-lg uppercase tracking-wider">
+                           {q.difficulty}
+                         </span>
+                         <span className="text-xs text-[var(--text-muted)] font-mono px-2 py-1">Q{i+1}</span>
+                      </div>
+                      <h3 className="text-lg font-medium text-white mb-4 leading-relaxed">{q.question}</h3>
+                      <div className="space-y-3 mt-5 pt-5 border-t border-white/5">
+                        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                          <span className="text-purple-400 font-semibold">Purpose:</span> {q.purpose}
+                        </p>
+                        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                          <span className="text-green-400 font-semibold">Look for:</span> {q.lookFor}
+                        </p>
                       </div>
                     </motion.div>
                   ))}
                 </div>
-
-                <div className="mt-8 flex justify-center">
-                  <button
-                    onClick={resetPipeline}
-                    className="flex items-center gap-2 px-6 py-3 glass-card hover:border-purple-500/30 transition-all font-medium"
-                  >
-                    <Upload className="w-4 h-4" />
-                    Process Another Resume
-                  </button>
+                
+                <div className="mt-16 text-center pb-20">
+                   <button 
+                     onClick={resetPipeline}
+                     className="px-10 py-4 rounded-full border border-white/10 hover:bg-white/5 transition-all text-sm font-medium"
+                   >
+                     Start New Candidate
+                   </button>
                 </div>
-              </div>
-            </motion.div>
-          )}
+              </motion.div>
+           )}
         </AnimatePresence>
       </div>
     </div>
