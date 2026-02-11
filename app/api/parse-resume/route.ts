@@ -16,8 +16,10 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
 
     if (file.name.endsWith(".pdf")) {
-      // Dynamic import to avoid pdf-parse test file issue
-      const pdfParse = (await import("pdf-parse")).default;
+      // Import the core parser directly to avoid pdf-parse's test file auto-load
+      // pdf-parse/index.js tries to read ./test/data/05-versions-space.pdf in debug mode
+      // which fails on serverless (Vercel). Importing lib/pdf-parse.js directly bypasses this.
+      const pdfParse = (await import("pdf-parse/lib/pdf-parse.js")).default;
       const data = await pdfParse(buffer);
       text = data.text;
     } else if (file.name.endsWith(".txt")) {
