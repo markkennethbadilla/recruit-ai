@@ -40,6 +40,13 @@
     scroll-behavior: smooth;
   }
 
+  /* Pointer cursor for all interactive elements */
+  a, button, [role="button"], [tabindex]:not([tabindex="-1"]),
+  input[type="submit"], input[type="button"], input[type="reset"],
+  select, label[for], summary {
+    cursor: pointer;
+  }
+
   body {
     background: var(--bg-primary);
     color: var(--text-primary);

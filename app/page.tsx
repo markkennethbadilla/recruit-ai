@@ -19,6 +19,7 @@ const features = [
   {
     icon: Upload,
     title: "Resume Parsing",
+    slug: "resume-parsing",
     description:
       "Upload any resume (PDF/TXT) and watch AI extract structured data — skills, experience, education, contact info — in seconds.",
     color: "text-purple-400",
@@ -28,6 +29,7 @@ const features = [
   {
     icon: BarChart3,
     title: "Smart Scoring",
+    slug: "smart-scoring",
     description:
       "AI compares the parsed resume against your job description across 6 dimensions, producing a detailed fit score with explanations.",
     color: "text-blue-400",
@@ -37,12 +39,19 @@ const features = [
   {
     icon: MessageSquareText,
     title: "Screening Questions",
+    slug: "screening-questions",
     description:
       "Auto-generates 8 tailored screening questions targeting the candidate's specific gaps and strengths — easy, medium, and hard.",
     color: "text-cyan-400",
     bg: "bg-cyan-500/10",
     border: "border-cyan-500/20",
   },
+];
+
+const avatars = [
+  { initials: "JR", from: "from-purple-500", to: "to-pink-500" },
+  { initials: "AK", from: "from-blue-500", to: "to-cyan-500" },
+  { initials: "SM", from: "from-emerald-500", to: "to-teal-500" },
 ];
 
 const stats = [
@@ -140,8 +149,10 @@ export default function Home() {
               
               <div className="flex items-center gap-4 text-sm text-[var(--text-muted)]">
                 <div className="flex -space-x-2">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="w-8 h-8 rounded-full border-2 border-[var(--bg-primary)] bg-gradient-to-br from-gray-700 to-gray-600" />
+                  {avatars.map((a) => (
+                    <div key={a.initials} className={`w-8 h-8 rounded-full border-2 border-[var(--bg-primary)] bg-gradient-to-br ${a.from} ${a.to} flex items-center justify-center text-[10px] font-bold text-white`}>
+                      {a.initials}
+                    </div>
                   ))}
                 </div>
                 <span>Trusted by recruiters</span>
@@ -251,32 +262,33 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {features.map((f, i) => (
-              <motion.div
-                key={f.title}
-                custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                className="glass-card-solid p-6 sm:p-8 md:p-10 group hover:-translate-y-2 transition-transform duration-300"
-              >
-                <div
-                  className={`w-16 h-16 rounded-2xl ${f.bg} ${f.border} border flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500`}
+              <Link key={f.title} href={`/features/${f.slug}`}>
+                <motion.div
+                  custom={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={fadeUp}
+                  className="glass-card-solid p-6 sm:p-8 md:p-10 group hover:-translate-y-2 transition-transform duration-300 cursor-pointer h-full"
                 >
-                  <f.icon className={`w-8 h-8 ${f.color}`} />
-                </div>
-                <h3 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-5 text-white group-hover:text-purple-300 transition-colors">
-                  {f.title}
-                </h3>
-                <p className="text-[var(--text-secondary)] leading-relaxed text-base sm:text-lg">
-                  {f.description}
-                </p>
-                
-                <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-[var(--border)] flex items-center text-sm font-medium text-[var(--text-muted)] group-hover:text-white transition-colors">
-                  <span className="mr-2">Learn more</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </motion.div>
+                  <div
+                    className={`w-16 h-16 rounded-2xl ${f.bg} ${f.border} border flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500`}
+                  >
+                    <f.icon className={`w-8 h-8 ${f.color}`} />
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-5 text-white group-hover:text-purple-300 transition-colors">
+                    {f.title}
+                  </h3>
+                  <p className="text-[var(--text-secondary)] leading-relaxed text-base sm:text-lg">
+                    {f.description}
+                  </p>
+                  
+                  <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-[var(--border)] flex items-center text-sm font-medium text-[var(--text-muted)] group-hover:text-white transition-colors">
+                    <span className="mr-2">Learn more</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </motion.div>
+              </Link>
             ))}
           </div>
         </div>
