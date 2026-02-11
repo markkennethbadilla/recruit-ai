@@ -1,0 +1,48 @@
+MARK KENNETH BADILLA
+AI Engineer | Full-Stack Developer
+markkennethbadilla@gmail.com | Cebu City, Philippines
+
+PROFESSIONAL SUMMARY
+AI-native developer specializing in workflow automation, LLM integration, and full-stack web development. Experienced in building production-grade AI pipelines, n8n automations, and modern web applications. Passionate about using AI tools to maximize impact and deliver results efficiently.
+
+SKILLS
+- Workflow Automation: n8n, Make.com, webhooks, BullMQ async pipelines
+- AI/LLM: OpenAI API, Claude API, OpenRouter, prompt engineering, LLM caching (40% cost reduction)
+- Frontend: Next.js, React, TypeScript, Tailwind CSS, shadcn/ui
+- Backend: Node.js, Python, Express, REST APIs, OAuth 2.0
+- Databases: PostgreSQL, Prisma ORM, MongoDB, AirTable
+- DevOps: Docker, Vercel, GitHub Actions, CI/CD
+- Collaboration: Slack, Teams, Notion, ClickUp, GitHub
+
+EXPERIENCE
+
+AI & Automation Developer | Freelance
+Jan 2025 - Present
+- Built Workflow Doctor: interactive diagnostic tool for n8n workflows, helping users debug and optimize automation flows
+- Developed LLM caching proxy achieving 40% API cost reduction through semantic similarity matching
+- Created BullMQ-powered async AI pipelines for production workloads
+- Designed webhook-driven integrations across multiple SaaS platforms
+- Built form-mapper: web app to digitize physical pre-printed forms using AI vision
+
+Full-Stack Developer | DigitsV2
+Jun 2024 - Present
+- Developing enterprise inventory management system with Next.js and Node.js
+- Implementing real-time stock tracking, serial number management, and automated reporting
+- Building RESTful APIs with Prisma ORM and PostgreSQL
+- Creating responsive UI components with React and Tailwind CSS
+- Managing CI/CD pipelines and deployment workflows
+
+PROJECTS
+- TalentFlow AI: AI-powered recruiting pipeline (resume parsing, scoring, screening question generation)
+- Workflow Doctor: Interactive diagnostic tool for n8n workflow debugging
+- Flow-LLM: Semantic caching layer for LLM APIs (40% cost savings)
+- Clean-Pipe: AI-powered data normalization pipeline
+- Mingming Kanban: Productivity app with AI-assisted task management
+
+EDUCATION
+Bachelor of Science in Computer Science
+University of San Carlos | 2020 - 2024
+
+CERTIFICATIONS
+- Google Cloud Digital Leader
+- AWS Cloud Practitioner (In Progress)
