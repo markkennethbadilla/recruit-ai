@@ -50,11 +50,11 @@ import { getHistory, saveToHistory, deleteFromHistory, clearHistory, type Histor
 import { exportPDFReport } from "@/lib/pdf-export";
 import { JD_TEMPLATES } from "@/lib/jd-templates";
 
-// Free models shown in UI
+// Free models shown in UI (matching portfolio setup)
 const MODELS = [
-  { id: "google/gemini-2.0-flash-001", name: "Gemini 2.0 Flash", speed: "Fast" },
-  { id: "openai/gpt-4o-mini", name: "GPT-4o Mini", speed: "Fast" },
-  { id: "anthropic/claude-3.5-haiku", name: "Claude 3.5 Haiku", speed: "Balanced" },
+  { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70B", speed: "Best" },
+  { id: "google/gemma-3-27b-it:free", name: "Gemma 3 27B", speed: "Fast" },
+  { id: "mistralai/mistral-small-3.1-24b-instruct:free", name: "Mistral Small 3.1", speed: "Balanced" },
 ];
 
 // Paid fallback (not user-selectable, used automatically on rate limits)

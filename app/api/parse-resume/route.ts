@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("resume") as File;
-    const model = (formData.get("model") as string) || "google/gemini-2.0-flash-001";
+    const model = (formData.get("model") as string) || "meta-llama/llama-3.3-70b-instruct:free";
 
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });

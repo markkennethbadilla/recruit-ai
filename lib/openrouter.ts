@@ -19,7 +19,7 @@ function isRateLimitError(status: number, errorText: string): boolean {
 
 export async function callOpenRouter(
   messages: OpenRouterMessage[],
-  model: string = "google/gemini-2.0-flash-001",
+  model: string = "meta-llama/llama-3.3-70b-instruct:free",
   temperature: number = 0.3
 ): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;

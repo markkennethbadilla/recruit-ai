@@ -55,7 +55,7 @@ ${scoringResult ? `SCORING RESULTS:\n${JSON.stringify(scoringResult, null, 2)}` 
         { role: "system", content: systemPrompt },
         { role: "user", content: userContent },
       ],
-      model || "google/gemini-2.0-flash-001"
+      model || "meta-llama/llama-3.3-70b-instruct:free"
     );
 
     let cleaned = result
