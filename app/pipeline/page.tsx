@@ -424,7 +424,7 @@ export default function PipelinePage() {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-6 py-3 sm:py-5 transition-all duration-300">
         <div className="max-w-7xl mx-auto">
-          <div className="glass-card px-3 sm:px-5 md:px-8 py-3 sm:py-4 flex items-center justify-between">
+          <div className="glass-card px-3 sm:px-5 md:px-8 py-3 sm:py-4 flex items-center justify-between" style={{ background: 'rgba(15, 16, 22, 0.85)', backdropFilter: 'blur(20px)' }}>
             <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity group">
               <div className="p-1.5 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors">
                 <ArrowLeft className="w-4 h-4 text-[var(--text-muted)] group-hover:text-white" />

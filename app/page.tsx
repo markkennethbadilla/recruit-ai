@@ -67,7 +67,7 @@ export default function Home() {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-6 py-3 sm:py-5 transition-all duration-300">
         <div className="max-w-7xl mx-auto">
-          <div className="glass-card px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex items-center justify-between">
+          <div className="glass-card px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex items-center justify-between" style={{ background: 'rgba(15, 16, 22, 0.85)', backdropFilter: 'blur(20px)' }}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
                 <Sparkles className="w-5 h-5 text-white" />
