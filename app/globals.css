@@ -82,9 +82,15 @@
     border: 1px solid var(--glass-border);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-radius: 20px;
+    border-radius: 14px;
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @media (min-width: 640px) {
+    .glass-card {
+      border-radius: 20px;
+    }
   }
 
   .glass-card:hover {
@@ -94,11 +100,23 @@
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   }
 
+  @media (max-width: 639px) {
+    .glass-card:hover {
+      transform: none;
+    }
+  }
+
   .glass-card-solid {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 20px;
+    border-radius: 14px;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  @media (min-width: 640px) {
+    .glass-card-solid {
+      border-radius: 20px;
+    }
   }
 
   .glass-card-solid:hover {
