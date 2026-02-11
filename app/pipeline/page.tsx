@@ -152,11 +152,11 @@ function LoadingState({ message }: { message: string }) {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex flex-col items-center justify-center py-16 sm:py-24 md:py-32 gap-6 sm:gap-8"
+      className="flex flex-col items-center justify-center py-10 sm:py-14 md:py-16 gap-5 sm:gap-6"
     >
       <div className="relative">
-        <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center shadow-lg shadow-purple-500/10">
-          <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-purple-400 animate-spin" />
+        <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center shadow-lg shadow-purple-500/10">
+          <Loader2 className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-purple-400 animate-spin" />
         </div>
         <div className="absolute -inset-4 rounded-3xl bg-purple-500/5 animate-ping" />
       </div>
@@ -420,83 +420,74 @@ export default function PipelinePage() {
   const selectedModel = MODELS.find((m) => m.id === model)!;
 
   return (
-    <div className="min-h-screen pb-10 sm:pb-20 selection:bg-purple-500/30">
+    <div className="min-h-screen pb-6 sm:pb-10 selection:bg-purple-500/30">
       <div className="gradient-bg opacity-50" />
       
-      {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-6 py-3 sm:py-5 transition-all duration-300">
-        <div className="max-w-7xl mx-auto">
-          <div className="glass-card px-3 sm:px-5 md:px-8 py-3 sm:py-4 flex items-center justify-between" style={{ background: 'rgba(15, 16, 22, 0.85)', backdropFilter: 'blur(20px)' }}>
-            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity group">
-              <div className="p-1.5 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors">
-                <ArrowLeft className="w-4 h-4 text-[var(--text-muted)] group-hover:text-white" />
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
-                <span className="font-bold text-lg">TalentFlow</span>
-              </div>
-            </Link>
-
-            {/* Model selector + History */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => { setShowHistory(!showHistory); refreshHistory(); }}
-                className="flex items-center gap-2 px-4 py-2.5 glass-card-solid hover:border-purple-500/30 transition-all text-sm group relative"
-              >
-                <History className="w-4 h-4 text-[var(--text-muted)] group-hover:text-purple-300" />
-                <span className="hidden sm:inline">History</span>
-                {history.length > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-purple-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {history.length}
-                  </span>
-                )}
-              </button>
-              <div className="relative">
-              <button
-                onClick={() => setShowModelDropdown(!showModelDropdown)}
-                className="flex items-center gap-3 px-5 py-2.5 glass-card-solid hover:border-purple-500/30 transition-all text-sm group"
-              >
-                <Brain className="w-4 h-4 text-purple-400 group-hover:text-purple-300" />
-                <span className="hidden sm:inline">{selectedModel.name}</span>
-                <span className="sm:hidden text-xs">{selectedModel.name.split(' ')[0]}</span>
-                <ChevronDown className={`w-3 h-3 text-[var(--text-muted)] transition-transform duration-300 ${showModelDropdown ? 'rotate-180' : ''}`} />
-              </button>
-              <AnimatePresence>
-                {showModelDropdown && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 top-full mt-3 w-72 glass-card-solid p-3 shadow-xl z-50 overflow-hidden"
-                  >
-                    {MODELS.map((m) => (
-                      <button
-                        key={m.id}
-                        onClick={() => {
-                          setModel(m.id);
-                          setShowModelDropdown(false);
-                        }}
-                        className={cn(
-                          "w-full text-left px-4 py-3 rounded-xl text-sm flex justify-between items-center transition-colors",
-                          model === m.id
-                            ? "bg-purple-500/20 text-purple-300"
-                            : "hover:bg-white/5 text-[var(--text-secondary)] hover:text-white"
-                        )}
-                      >
-                        <span className="font-medium">{m.name}</span>
-                        <span className="text-xs text-[var(--text-muted)] opacity-70">{m.speed}</span>
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            </div>
+      {/* Floating Controls */}
+      <div className="fixed top-3 sm:top-4 left-3 sm:left-5 z-50">
+        <Link href="/" className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all group hover:scale-105" style={{ background: 'rgba(15, 16, 22, 0.85)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <ArrowLeft className="w-4 h-4 text-[var(--text-muted)] group-hover:text-white transition-colors" />
+          <div className="w-6 h-6 rounded-md bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+            <Sparkles className="w-3 h-3 text-white" />
           </div>
+          <span className="font-semibold text-sm hidden sm:inline">TalentFlow</span>
+        </Link>
+      </div>
+      <div className="fixed top-3 sm:top-4 right-3 sm:right-5 z-50 flex items-center gap-2">
+        <button
+          onClick={() => { setShowHistory(!showHistory); refreshHistory(); }}
+          className="relative p-2.5 rounded-xl transition-all hover:scale-105 group"
+          style={{ background: 'rgba(15, 16, 22, 0.85)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)' }}
+          title="History"
+        >
+          <History className="w-4 h-4 text-[var(--text-muted)] group-hover:text-purple-300 transition-colors" />
+          {history.length > 0 && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-purple-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+              {history.length}
+            </span>
+          )}
+        </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowModelDropdown(!showModelDropdown)}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all hover:scale-105 text-sm group"
+            style={{ background: 'rgba(15, 16, 22, 0.85)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <Brain className="w-4 h-4 text-purple-400 group-hover:text-purple-300" />
+            <span className="hidden sm:inline text-xs">{selectedModel.name}</span>
+            <ChevronDown className={`w-3 h-3 text-[var(--text-muted)] transition-transform duration-300 ${showModelDropdown ? 'rotate-180' : ''}`} />
+          </button>
+          <AnimatePresence>
+            {showModelDropdown && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="absolute right-0 top-full mt-2 w-64 glass-card-solid p-2 shadow-xl z-50 overflow-hidden"
+              >
+                {MODELS.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => {
+                      setModel(m.id);
+                      setShowModelDropdown(false);
+                    }}
+                    className={cn(
+                      "w-full text-left px-3 py-2.5 rounded-lg text-sm flex justify-between items-center transition-colors",
+                      model === m.id
+                        ? "bg-purple-500/20 text-purple-300"
+                        : "hover:bg-white/5 text-[var(--text-secondary)] hover:text-white"
+                    )}
+                  >
+                    <span className="font-medium text-xs">{m.name}</span>
+                    <span className="text-[10px] text-[var(--text-muted)] opacity-70">{m.speed}</span>
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </nav>
+      </div>
 
       {/* History Sidebar */}
       <AnimatePresence>
@@ -606,9 +597,9 @@ export default function PipelinePage() {
         )}
       </AnimatePresence>
 
-      <div className="max-w-6xl mx-auto px-3 sm:px-6 pt-24 sm:pt-32 md:pt-40">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 pt-14 sm:pt-16">
         {/* Progress steps */}
-        <div className="flex justify-center mb-8 sm:mb-12 md:mb-16">
+        <div className="flex justify-center mb-4 sm:mb-6">
           <div className="flex items-center bg-white/5 p-1.5 sm:p-2.5 rounded-full border border-white/5 backdrop-blur-md overflow-x-auto max-w-full">
             {steps.map((s, i) => {
               const isActive = i === currentStepIndex;
@@ -676,9 +667,9 @@ export default function PipelinePage() {
               transition={{ duration: 0.4 }}
               className="max-w-2xl mx-auto"
             >
-              <div className="text-center mb-6 sm:mb-8 md:mb-12">
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-5 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Upload Candidate Resume</h2>
-                <p className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed px-2 sm:px-0">
+              <div className="text-center mb-4 sm:mb-5">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Upload Candidate Resume</h2>
+                <p className="text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed px-2 sm:px-0">
                   Supports PDF and TXT formats. AI will parse details automatically.
                 </p>
               </div>
@@ -686,7 +677,7 @@ export default function PipelinePage() {
               <div
                 {...getRootProps()}
                 className={cn(
-                  "relative glass-card p-8 sm:p-12 md:p-16 cursor-pointer transition-all duration-300 text-center group overflow-hidden",
+                  "relative glass-card p-6 sm:p-8 md:p-10 cursor-pointer transition-all duration-300 text-center group overflow-hidden",
                   isDragActive
                     ? "border-purple-500/50 shadow-[0_0_50px_rgba(168,85,247,0.2)] bg-purple-500/5"
                     : "hover:border-purple-500/30 hover:bg-white/[0.02]"
@@ -825,11 +816,11 @@ export default function PipelinePage() {
               exit={{ opacity: 0 }}
               className="max-w-2xl mx-auto"
             >
-              <div className="text-center mb-6 sm:mb-8">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">Auto-Pilot Running</h2>
+              <div className="text-center mb-4 sm:mb-5">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">Auto-Pilot Running</h2>
                 <p className="text-[var(--text-secondary)]">Full pipeline executing automatically</p>
               </div>
-              <div className="glass-card p-6 sm:p-8 md:p-10 space-y-5 sm:space-y-8">
+              <div className="glass-card p-5 sm:p-6 space-y-4 sm:space-y-5">
                 {["Parsing resume...", "Scoring candidate fit...", "Generating interview questions...", "Complete!"].map((label, i) => {
                   const isActive = autoPilotStatus === label;
                   const isDone = ["Parsing resume...", "Scoring candidate fit...", "Generating interview questions...", "Complete!"].indexOf(autoPilotStatus) > i;
@@ -867,7 +858,7 @@ export default function PipelinePage() {
               className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8"
             >
               {/* Left: Parsed Resume */}
-              <div className="glass-card overflow-hidden flex flex-col h-auto max-h-[60vh] lg:h-[700px]">
+              <div className="glass-card overflow-hidden flex flex-col">
                 <div className="p-4 sm:p-6 border-b border-[var(--border)] bg-white/[0.02] flex justify-between items-center gap-2">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-purple-500/20 rounded-lg text-purple-300">
@@ -883,7 +874,7 @@ export default function PipelinePage() {
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 sm:space-y-8 custom-scrollbar">
+                <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
                   {/* Contact Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {parsedResume.email && (
@@ -990,9 +981,9 @@ export default function PipelinePage() {
               </div>
 
               {/* Right: Job Description + Score Button */}
-              <div className="flex flex-col gap-4 sm:gap-6 h-auto lg:h-[700px]">
-                <div className="glass-card p-4 sm:p-6 flex-1 flex flex-col">
-                  <div className="pb-5 mb-5 border-b border-[var(--border)]">
+              <div className="flex flex-col gap-4 sm:gap-5">
+                <div className="glass-card p-4 sm:p-6 flex flex-col">
+                  <div className="pb-4 mb-4 border-b border-[var(--border)]">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-lg font-bold text-white">Target Job Description</h3>
                       {/* JD Templates */}
@@ -1032,12 +1023,12 @@ export default function PipelinePage() {
                       Paste a JD or pick a template to evaluate candidate fit.
                     </p>
                   </div>
-                  <div className="flex-1 relative">
+                  <div className="relative min-h-[250px]">
                     <textarea
                       value={jobDescription}
                       onChange={(e) => setJobDescription(e.target.value)}
                       placeholder="Paste job title, responsibilities, and requirements here..."
-                      className="w-full h-full bg-white/[0.02] border-0 rounded-xl p-4 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-1 focus:ring-purple-500/50 resize-none leading-relaxed transition-all"
+                      className="w-full h-full min-h-[250px] bg-white/[0.02] border-0 rounded-xl p-4 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-1 focus:ring-purple-500/50 resize-none leading-relaxed transition-all"
                     />
                     {!jobDescription && (
                        <button
@@ -1087,11 +1078,11 @@ export default function PipelinePage() {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
             >
               {/* Score overview - Large Card */}
-              <div className="glass-card p-6 sm:p-8 md:p-10 flex flex-col items-center justify-center text-center relative overflow-hidden group">
+              <div className="glass-card p-5 sm:p-6 md:p-8 flex flex-col items-center justify-center text-center relative overflow-hidden group">
                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent transition-opacity group-hover:from-purple-500/10" />
                  
-                <h3 className="text-sm font-bold mb-5 sm:mb-8 text-[var(--text-secondary)] uppercase tracking-wider">Overall Fit Score</h3>
-                <div className="mb-5 sm:mb-8 scale-100 sm:scale-110">
+                <h3 className="text-sm font-bold mb-4 sm:mb-5 text-[var(--text-secondary)] uppercase tracking-wider">Overall Fit Score</h3>
+                <div className="mb-4 sm:mb-5 scale-100 sm:scale-110">
                    <ScoreRing score={scoring.overallScore} size={180} />
                 </div>
                 
@@ -1244,10 +1235,10 @@ export default function PipelinePage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="max-w-4xl mx-auto"
               >
-                <div className="text-center mb-6 sm:mb-8 md:mb-12">
-                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3">Tailored Interview Guide</h2>
-                  <p className="text-[var(--text-secondary)] text-base sm:text-lg">Based on the candidate's specific profile and gaps.</p>
-                  <div className="flex items-center justify-center gap-2 sm:gap-3 mt-4 sm:mt-6 flex-wrap">
+                <div className="text-center mb-4 sm:mb-5">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2">Tailored Interview Guide</h2>
+                  <p className="text-[var(--text-secondary)] text-sm sm:text-base">Based on the candidate's specific profile and gaps.</p>
+                  <div className="flex items-center justify-center gap-2 sm:gap-3 mt-3 sm:mt-4 flex-wrap">
                     <button
                       onClick={handleExportPDF}
                       className="flex items-center gap-2 px-5 py-2.5 glass-card-solid hover:border-purple-500/30 transition-all text-sm font-medium text-[var(--text-secondary)] hover:text-white"
@@ -1272,7 +1263,7 @@ export default function PipelinePage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05 }}
-                      className="glass-card p-5 sm:p-6 md:p-8 border-l-4 border-l-purple-500"
+                      className="glass-card p-4 sm:p-5 md:p-6 border-l-4 border-l-purple-500"
                     >
                       <div className="flex justify-between items-start mb-4">
                          <span className="px-3 py-1.5 bg-purple-500/10 text-purple-300 text-xs font-bold rounded-lg uppercase tracking-wider">
@@ -1293,7 +1284,7 @@ export default function PipelinePage() {
                   ))}
                 </div>
                 
-                <div className="mt-8 sm:mt-12 md:mt-16 text-center pb-10 sm:pb-20 flex flex-col items-center gap-4">
+                <div className="mt-6 sm:mt-8 text-center pb-6 sm:pb-10 flex flex-col items-center gap-4">
                    <button 
                      onClick={resetPipeline}
                      className="px-10 py-4 rounded-full border border-white/10 hover:bg-white/5 transition-all text-sm font-medium"
