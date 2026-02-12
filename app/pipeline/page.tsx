@@ -225,8 +225,16 @@ export default function PipelinePage() {
       ? 3
       : 4; // summary
 
+  // Track the highest step ever reached for forward navigation
+  const highestReached = questions.length > 0 && scoring ? 4
+    : questions.length > 0 ? 3
+    : scoring ? 2
+    : parsedResume ? 1
+    : 0;
+
   function navigateToStep(stepIndex: number) {
-    if (stepIndex >= currentStepIndex) return; // can only go back
+    if (stepIndex === currentStepIndex) return;
+    if (stepIndex > highestReached) return; // can't go to steps not yet completed
     switch (stepIndex) {
       case 0:
         resetPipeline();
@@ -310,7 +318,7 @@ export default function PipelinePage() {
       if (!res.ok) throw new Error(data.error);
 
       setQuestions(data.questions);
-      setState((s) => ({ ...s, step: "summary", screeningQuestions: data.questions }));
+      setState((s) => ({ ...s, step: "complete", screeningQuestions: data.questions }));
 
       // Save to history
       if (parsedResume) {
@@ -387,7 +395,7 @@ export default function PipelinePage() {
       const qData = await qRes.json();
       if (!qRes.ok) throw new Error(qData.error);
       setQuestions(qData.questions);
-      setState({ step: "summary", screeningQuestions: qData.questions, scoring: scoringResult, parsedResume: parsed });
+      setState({ step: "complete", screeningQuestions: qData.questions, scoring: scoringResult, parsedResume: parsed });
 
       // Save to history
       saveToHistory({
@@ -423,7 +431,7 @@ export default function PipelinePage() {
     setJobDescription(entry.jobDescription);
     setModel(MODELS.find((m) => m.id === entry.model)?.id || MODELS[0].id);
     if (entry.questions.length > 0) {
-      setState({ step: "summary", screeningQuestions: entry.questions, scoring: entry.scoring ?? undefined, parsedResume: entry.parsedResume });
+      setState({ step: "complete", screeningQuestions: entry.questions, scoring: entry.scoring ?? undefined, parsedResume: entry.parsedResume });
     } else if (entry.scoring) {
       setState({ step: "scored", scoring: entry.scoring, parsedResume: entry.parsedResume });
     } else {
@@ -629,20 +637,20 @@ export default function PipelinePage() {
             {steps.map((s, i) => {
               const isActive = i === currentStepIndex;
               const isDone = i < currentStepIndex;
-              const isClickable = isDone;
+              const isReachable = i <= highestReached && i !== currentStepIndex;
               return (
                 <div key={s.id} className="flex items-center">
                   <motion.div
                     animate={{
-                      backgroundColor: isActive ? "rgba(139, 92, 246, 0.2)" : isDone ? "rgba(16, 185, 129, 0.2)" : "transparent",
-                      color: isActive ? "#d8b4fe" : isDone ? "#6ee7b7" : "#64748b",
+                      backgroundColor: isActive ? "rgba(139, 92, 246, 0.2)" : isDone ? "rgba(16, 185, 129, 0.2)" : (i <= highestReached && i > currentStepIndex) ? "rgba(139, 92, 246, 0.08)" : "transparent",
+                      color: isActive ? "#d8b4fe" : isDone ? "#6ee7b7" : (i <= highestReached && i > currentStepIndex) ? "#a78bfa" : "#64748b",
                     }}
                     className={cn(
                       "flex items-center gap-1.5 sm:gap-2.5 px-3 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium transition-all duration-300",
-                      isClickable && "cursor-pointer hover:scale-105 hover:brightness-125"
+                      isReachable && "cursor-pointer hover:scale-105 hover:brightness-125"
                     )}
-                    onClick={() => isClickable && navigateToStep(i)}
-                    title={isDone ? `Go back to ${s.label}` : undefined}
+                    onClick={() => isReachable && navigateToStep(i)}
+                    title={isReachable ? `Go to ${s.label}` : undefined}
                   >
                     <s.icon className="w-4 h-4" />
                     <span className={cn("transition-opacity", isActive ? "opacity-100" : "opacity-60 hidden md:inline")}>

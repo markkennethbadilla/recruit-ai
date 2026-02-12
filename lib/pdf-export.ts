@@ -16,9 +16,10 @@ export function exportPDFReport({
 }) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.width;
-  const margin = 20;
+  const pageHeight = doc.internal.pageSize.height;
+  const margin = 12;
   const contentWidth = pageWidth - margin * 2;
-  let y = 20;
+  let y = 10;
 
   const colors = {
     purple: [139, 92, 246] as [number, number, number],
@@ -31,254 +32,231 @@ export function exportPDFReport({
     white: [255, 255, 255] as [number, number, number],
   };
 
-  function checkPageBreak(needed: number) {
-    if (y + needed > 270) {
-      doc.addPage();
-      y = 20;
-    }
-  }
-
-  function drawLine() {
-    doc.setDrawColor(...colors.muted);
-    doc.setLineWidth(0.2);
+  function thinLine() {
+    doc.setDrawColor(200, 200, 210);
+    doc.setLineWidth(0.15);
     doc.line(margin, y, pageWidth - margin, y);
-    y += 6;
+    y += 3;
   }
 
-  // ── Header ──
+  // ── Compact Header ──
   doc.setFillColor(19, 20, 31);
-  doc.rect(0, 0, pageWidth, 45, "F");
+  doc.rect(0, 0, pageWidth, 28, "F");
   doc.setFillColor(...colors.purple);
-  doc.roundedRect(margin, 10, 8, 8, 2, 2, "F");
+  doc.roundedRect(margin, 6, 6, 6, 1.5, 1.5, "F");
   doc.setTextColor(...colors.white);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.text("TalentFlow AI", margin + 12, 17);
-  doc.setFontSize(8);
+  doc.setFontSize(13);
+  doc.text("TalentFlow AI", margin + 9, 11);
+  doc.setFontSize(6);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...colors.muted);
-  doc.text("Candidate Assessment Report", margin + 12, 22);
-  doc.setFontSize(7);
-  doc.text(`Generated ${new Date().toLocaleDateString()} • Model: ${model}`, margin + 12, 27);
-  y = 55;
+  doc.text(`Report • ${new Date().toLocaleDateString()} • ${model}`, margin + 9, 15.5);
 
-  // ── Candidate Info ──
+  // Score badge in header (if available)
+  if (scoring) {
+    const scoreColor = scoring.overallScore >= 80 ? colors.green : scoring.overallScore >= 60 ? colors.amber : colors.red;
+    doc.setFillColor(...scoreColor);
+    doc.roundedRect(pageWidth - margin - 22, 5, 22, 14, 3, 3, "F");
+    doc.setTextColor(...colors.white);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${scoring.overallScore}`, pageWidth - margin - 11, 11, { align: "center" });
+    doc.setFontSize(5);
+    doc.text("/100", pageWidth - margin - 11, 15, { align: "center" });
+  }
+
+  y = 33;
+
+  // ── Candidate Name + Contact (single line) ──
   doc.setTextColor(30, 30, 40);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
+  doc.setFontSize(14);
   doc.text(parsedResume.name || "Unknown Candidate", margin, y);
-  y += 8;
+  y += 4.5;
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(7);
   doc.setTextColor(...colors.muted);
   const contactParts: string[] = [];
   if (parsedResume.email) contactParts.push(parsedResume.email);
   if (parsedResume.phone) contactParts.push(parsedResume.phone);
   if (parsedResume.location) contactParts.push(parsedResume.location);
   if (contactParts.length) {
-    doc.text(contactParts.join("  |  "), margin, y);
-    y += 8;
+    doc.text(contactParts.join("  •  "), margin, y);
+    y += 4;
   }
 
-  // Summary
+  // Summary (truncated to 2 lines max)
   if (parsedResume.summary) {
     doc.setTextColor(60, 60, 70);
-    doc.setFontSize(9);
+    doc.setFontSize(7);
     const summaryLines = doc.splitTextToSize(parsedResume.summary, contentWidth);
-    doc.text(summaryLines, margin, y);
-    y += summaryLines.length * 4.5 + 4;
+    doc.text(summaryLines.slice(0, 2), margin, y);
+    y += Math.min(summaryLines.length, 2) * 3.2 + 2;
   }
 
-  drawLine();
-
-  // ── Skills ──
+  // Skills (inline, compact)
   if (parsedResume.skills.length > 0) {
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
+    doc.setFontSize(7);
     doc.setTextColor(30, 30, 40);
-    doc.text("SKILLS", margin, y);
-    y += 6;
-
+    doc.text("Skills:", margin, y);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
     doc.setTextColor(80, 80, 90);
-    const skillText = parsedResume.skills.join("  •  ");
-    const skillLines = doc.splitTextToSize(skillText, contentWidth);
-    doc.text(skillLines, margin, y);
-    y += skillLines.length * 4 + 6;
-    drawLine();
+    const skillsW = doc.getTextWidth("Skills: ");
+    const skillText = parsedResume.skills.slice(0, 15).join(", ");
+    const skillLines = doc.splitTextToSize(skillText, contentWidth - skillsW);
+    doc.text(skillLines.slice(0, 1), margin + skillsW, y);
+    y += 4;
   }
 
-  // ── Score ──
+  thinLine();
+
+  // ── Scoring Section (compact 2-column layout) ──
   if (scoring) {
-    checkPageBreak(60);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setTextColor(30, 30, 40);
-    doc.text("SCORING RESULTS", margin, y);
-    y += 8;
+    const recLabel = scoring.recommendation === "strong_match" ? "STRONGLY RECOMMENDED" : scoring.recommendation === "potential_match" ? "POTENTIAL MATCH" : "NOT RECOMMENDED";
+    doc.text(`Score Breakdown`, margin, y);
+    
+    const recColor = scoring.recommendation === "strong_match" ? colors.green : scoring.recommendation === "potential_match" ? colors.amber : colors.red;
+    doc.setFontSize(6);
+    doc.setTextColor(...recColor);
+    doc.text(recLabel, margin + doc.getTextWidth("Score Breakdown  ") + 5, y);
+    y += 5;
 
-    // Overall score
-    const scoreColor =
-      scoring.overallScore >= 80 ? colors.green : scoring.overallScore >= 60 ? colors.amber : colors.red;
-    doc.setFillColor(...scoreColor);
-    doc.roundedRect(margin, y - 2, 20, 12, 3, 3, "F");
-    doc.setTextColor(...colors.white);
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text(`${scoring.overallScore}`, margin + 10, y + 6, { align: "center" });
+    // 2-column breakdown
+    const colWidth = (contentWidth - 6) / 2;
+    const startY = y;
+    const items = scoring.breakdown;
+    const half = Math.ceil(items.length / 2);
 
-    doc.setTextColor(30, 30, 40);
-    doc.setFontSize(10);
-    doc.text(`/ 100 — ${scoring.recommendation === "strong_match" ? "Strongly Recommended" : scoring.recommendation === "potential_match" ? "Potential Match" : "Not Recommended"}`, margin + 24, y + 6);
-    y += 16;
+    for (let col = 0; col < 2; col++) {
+      y = startY;
+      const xOff = margin + col * (colWidth + 6);
+      const slice = col === 0 ? items.slice(0, half) : items.slice(half);
 
-    // Summary
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(80, 80, 90);
-    const sumLines = doc.splitTextToSize(scoring.summary, contentWidth);
-    doc.text(sumLines, margin, y);
-    y += sumLines.length * 4 + 6;
+      for (const item of slice) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(6.5);
+        doc.setTextColor(50, 50, 60);
+        doc.text(item.category, xOff, y);
+        doc.setFont("helvetica", "normal");
+        doc.text(`${item.score}/${item.maxScore}`, xOff + colWidth, y, { align: "right" });
+        y += 2.8;
 
-    // Breakdown
-    for (const item of scoring.breakdown) {
-      checkPageBreak(20);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(50, 50, 60);
-      doc.text(item.category, margin + 2, y);
-      doc.setFont("helvetica", "normal");
-      doc.text(`${item.score}/${item.maxScore}`, pageWidth - margin, y, { align: "right" });
+        // Thin progress bar
+        doc.setFillColor(230, 230, 235);
+        doc.roundedRect(xOff, y, colWidth, 1.8, 0.7, 0.7, "F");
+        const fillColor = item.score >= 8 ? colors.green : item.score >= 5 ? colors.amber : colors.red;
+        doc.setFillColor(...fillColor);
+        doc.roundedRect(xOff, y, colWidth * (item.score / item.maxScore), 1.8, 0.7, 0.7, "F");
+        y += 3;
 
-      y += 4;
-      // Progress bar
-      const barWidth = contentWidth - 4;
-      doc.setFillColor(230, 230, 235);
-      doc.roundedRect(margin + 2, y, barWidth, 3, 1, 1, "F");
-      const fillColor =
-        item.score >= 8 ? colors.green : item.score >= 5 ? colors.amber : colors.red;
-      doc.setFillColor(...fillColor);
-      doc.roundedRect(margin + 2, y, barWidth * (item.score / item.maxScore), 3, 1, 1, "F");
-      y += 5;
-
-      doc.setFontSize(7);
-      doc.setTextColor(...colors.muted);
-      const reasonLines = doc.splitTextToSize(item.reasoning, contentWidth - 4);
-      doc.text(reasonLines, margin + 2, y);
-      y += reasonLines.length * 3.5 + 4;
+        doc.setFontSize(5.5);
+        doc.setTextColor(...colors.muted);
+        const reasonLines = doc.splitTextToSize(item.reasoning, colWidth);
+        doc.text(reasonLines.slice(0, 2), xOff, y);
+        y += Math.min(reasonLines.length, 2) * 2.8 + 2.5;
+      }
     }
 
-    // Strengths & Gaps
-    checkPageBreak(30);
-    drawLine();
+    // Use the lower of the two column y positions
+    y = Math.max(y, startY) + 1;
 
-    const colWidth = (contentWidth - 10) / 2;
+    // Strengths & Gaps in 2 columns
+    thinLine();
+    const sgColWidth = (contentWidth - 6) / 2;
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(7);
     doc.setTextColor(...colors.green);
     doc.text("STRENGTHS", margin, y);
     doc.setTextColor(...colors.amber);
-    doc.text("GAPS", margin + colWidth + 10, y);
-    y += 6;
+    doc.text("GAPS", margin + sgColWidth + 6, y);
+    y += 3.5;
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    const maxItems = Math.max(scoring.strengths.length, scoring.gaps.length);
-    for (let i = 0; i < maxItems; i++) {
-      checkPageBreak(10);
+    doc.setFontSize(6);
+    const sgStartY = y;
+    const maxSG = Math.max(scoring.strengths.length, scoring.gaps.length);
+    for (let i = 0; i < Math.min(maxSG, 3); i++) {
       if (scoring.strengths[i]) {
         doc.setTextColor(60, 60, 70);
-        const sLines = doc.splitTextToSize(`✓  ${scoring.strengths[i]}`, colWidth);
-        doc.text(sLines, margin, y);
+        const sLines = doc.splitTextToSize(`✓ ${scoring.strengths[i]}`, sgColWidth);
+        doc.text(sLines.slice(0, 1), margin, y);
       }
       if (scoring.gaps[i]) {
         doc.setTextColor(80, 80, 90);
-        const gLines = doc.splitTextToSize(`△  ${scoring.gaps[i]}`, colWidth);
-        doc.text(gLines, margin + colWidth + 10, y);
+        const gLines = doc.splitTextToSize(`△ ${scoring.gaps[i]}`, sgColWidth);
+        doc.text(gLines.slice(0, 1), margin + sgColWidth + 6, y);
       }
-      y += 6;
+      y += 3.5;
     }
-    drawLine();
+    y = Math.max(y, sgStartY) + 1;
+    thinLine();
   }
 
-  // ── Questions ──
+  // ── Questions (compact list) ──
   if (questions.length > 0) {
-    checkPageBreak(20);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setTextColor(30, 30, 40);
-    doc.text("SCREENING QUESTIONS", margin, y);
-    y += 8;
+    doc.text("Interview Questions", margin, y);
+    y += 4.5;
 
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
-      checkPageBreak(30);
+      if (y > pageHeight - 15) break; // don't overflow page
 
-      // Difficulty badge
-      const badgeColor =
-        q.difficulty === "easy" ? colors.green : q.difficulty === "medium" ? colors.amber : colors.red;
+      // Difficulty + number inline
+      const badgeColor = q.difficulty === "easy" ? colors.green : q.difficulty === "medium" ? colors.amber : colors.red;
       doc.setFillColor(...badgeColor);
-      doc.roundedRect(margin, y - 2, 16, 5, 1.5, 1.5, "F");
+      doc.roundedRect(margin, y - 1.5, 10, 3.5, 1, 1, "F");
       doc.setTextColor(...colors.white);
-      doc.setFontSize(6);
+      doc.setFontSize(5);
       doc.setFont("helvetica", "bold");
-      doc.text(q.difficulty.toUpperCase(), margin + 8, y + 1.5, { align: "center" });
+      doc.text(q.difficulty.toUpperCase(), margin + 5, y + 0.5, { align: "center" });
 
       doc.setTextColor(30, 30, 40);
       doc.setFontSize(7);
-      doc.text(`Q${i + 1}`, pageWidth - margin, y + 1.5, { align: "right" });
-      y += 6;
-
-      // Question text
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(40, 40, 50);
-      const qLines = doc.splitTextToSize(q.question, contentWidth);
-      doc.text(qLines, margin, y);
-      y += qLines.length * 4.5 + 3;
+      const qLines = doc.splitTextToSize(q.question, contentWidth - 14);
+      doc.text(qLines.slice(0, 2), margin + 13, y);
+      y += Math.min(qLines.length, 2) * 3.2 + 1;
 
-      // Purpose & Look for
+      // Purpose + Look for on same line, tiny
+      doc.setFontSize(5.5);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-
       doc.setTextColor(...colors.purple);
-      doc.setFont("helvetica", "bold");
-      doc.text("Purpose: ", margin, y);
-      doc.setFont("helvetica", "normal");
+      doc.text("Why: ", margin + 13, y);
       doc.setTextColor(...colors.muted);
-      const purposeW = doc.getTextWidth("Purpose: ");
-      const pLines = doc.splitTextToSize(q.purpose, contentWidth - purposeW);
-      doc.text(pLines, margin + purposeW, y);
-      y += pLines.length * 3.5 + 2;
+      const pw = doc.getTextWidth("Why: ");
+      const purposeText = doc.splitTextToSize(q.purpose, contentWidth - 14 - pw);
+      doc.text(purposeText.slice(0, 1), margin + 13 + pw, y);
+      y += 2.8;
 
       doc.setTextColor(...colors.green);
-      doc.setFont("helvetica", "bold");
-      doc.text("Look for: ", margin, y);
-      doc.setFont("helvetica", "normal");
+      doc.text("Look for: ", margin + 13, y);
       doc.setTextColor(...colors.muted);
-      const lookW = doc.getTextWidth("Look for: ");
-      const lLines = doc.splitTextToSize(q.lookFor, contentWidth - lookW);
-      doc.text(lLines, margin + lookW, y);
-      y += lLines.length * 3.5 + 8;
+      const lw = doc.getTextWidth("Look for: ");
+      const lookText = doc.splitTextToSize(q.lookFor, contentWidth - 14 - lw);
+      doc.text(lookText.slice(0, 1), margin + 13 + lw, y);
+      y += 4.5;
     }
   }
 
-  // ── Footer on each page ──
-  const totalPages = doc.getNumberOfPages();
-  for (let p = 1; p <= totalPages; p++) {
-    doc.setPage(p);
-    doc.setFontSize(7);
-    doc.setTextColor(...colors.muted);
-    doc.text(
-      `TalentFlow AI Report — Page ${p} of ${totalPages}`,
-      pageWidth / 2,
-      doc.internal.pageSize.height - 10,
-      { align: "center" }
-    );
-  }
+  // ── Footer ──
+  doc.setFontSize(5.5);
+  doc.setTextColor(...colors.muted);
+  doc.text(
+    `TalentFlow AI • talentai.elunari.uk • Generated ${new Date().toLocaleDateString()}`,
+    pageWidth / 2,
+    pageHeight - 6,
+    { align: "center" }
+  );
 
   const safeName = (parsedResume.name || "candidate").replace(/[^a-zA-Z0-9]/g, "-").toLowerCase();
   doc.save(`talentflow-${safeName}-report.pdf`);
