@@ -12,8 +12,11 @@ import {
   Clock,
   Sparkles,
   CheckCircle2,
+  Sun,
+  Moon,
 } from "lucide-react";
 import Link from "next/link";
+import { useTheme } from "@/lib/theme";
 
 const features = [
   {
@@ -70,13 +73,14 @@ const fadeUp = {
 };
 
 export default function Home() {
+  const { theme, toggleTheme } = useTheme();
   return (
     <div className="min-h-screen selection:bg-purple-500/30">
       
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-6 py-3 sm:py-5 transition-all duration-300">
         <div className="max-w-7xl mx-auto">
-          <div className="glass-card px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex items-center justify-between" style={{ background: 'rgba(15, 16, 22, 0.85)', backdropFilter: 'blur(20px)' }}>
+          <div className="glass-card px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex items-center justify-between" style={{ background: 'var(--bg-card)', backdropFilter: 'blur(20px)' }}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
                 <Sparkles className="w-5 h-5 text-white" />
@@ -86,13 +90,22 @@ export default function Home() {
                 <span className="text-purple-400 text-xs font-mono font-medium">AI RECRUITING</span>
               </div>
             </div>
-            <Link
-              href="/pipeline"
-              className="hidden md:flex items-center gap-2 px-7 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-sm font-medium transition-all duration-300 group"
-            >
-              Launch Pipeline 
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={toggleTheme}
+                className="p-2.5 rounded-xl bg-[var(--glass)] border border-[var(--glass-border)] hover:bg-[var(--glass-hover)] transition-all"
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-purple-500" />}
+              </button>
+              <Link
+                href="/pipeline"
+                className="hidden md:flex items-center gap-2 px-7 py-3 bg-[var(--glass)] hover:bg-[var(--glass-hover)] border border-[var(--glass-border)] rounded-full text-sm font-medium transition-all duration-300 group"
+              >
+                Launch Pipeline 
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
@@ -121,7 +134,7 @@ export default function Home() {
             </motion.div>
 
             <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-6 sm:mb-10 leading-[1.1] tracking-tight">
-              <span className="bg-gradient-to-b from-white via-white to-white/70 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-b from-[var(--text-primary)] via-[var(--text-primary)] to-[var(--text-secondary)] bg-clip-text text-transparent">
                 Screen Smarter.
               </span>
               <br />
@@ -231,7 +244,7 @@ export default function Home() {
               <h3 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
                 {stat.label}
               </h3>
-              <div className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-2">
+              <div className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-[var(--text-primary)] to-[var(--text-secondary)] bg-clip-text text-transparent mb-2">
                 {stat.value}
               </div>
               <p className="text-[var(--text-secondary)]">
@@ -276,14 +289,14 @@ export default function Home() {
                   >
                     <f.icon className={`w-8 h-8 ${f.color}`} />
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-5 text-white group-hover:text-purple-300 transition-colors">
+                  <h3 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-5 text-[var(--text-primary)] group-hover:text-purple-400 transition-colors">
                     {f.title}
                   </h3>
                   <p className="text-[var(--text-secondary)] leading-relaxed text-base sm:text-lg">
                     {f.description}
                   </p>
                   
-                  <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-[var(--border)] flex items-center text-sm font-medium text-[var(--text-muted)] group-hover:text-white transition-colors">
+                  <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-[var(--border)] flex items-center text-sm font-medium text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-colors">
                     <span className="mr-2">Learn more</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -336,9 +349,9 @@ export default function Home() {
             © 2026 TalentFlow AI. Built with ❤️ for WeAssist.io
           </p>
           <div className="flex gap-6 text-[var(--text-muted)]">
-            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms</a>
-            <a href="#" className="hover:text-white transition-colors">Contact</a>
+            <a href="#" className="hover:text-[var(--text-primary)] transition-colors">Privacy</a>
+            <a href="#" className="hover:text-[var(--text-primary)] transition-colors">Terms</a>
+            <a href="#" className="hover:text-[var(--text-primary)] transition-colors">Contact</a>
           </div>
         </div>
       </footer>

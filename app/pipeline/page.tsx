@@ -39,6 +39,8 @@ import {
   Play,
   LayoutTemplate,
   ClipboardList,
+  Sun,
+  Moon,
 } from "lucide-react";
 import type {
   ParsedResume,
@@ -50,6 +52,7 @@ import { cn } from "@/lib/utils";
 import { getHistory, saveToHistory, deleteFromHistory, clearHistory, type HistoryEntry } from "@/lib/candidate-history";
 import { exportPDFReport } from "@/lib/pdf-export";
 import { JD_TEMPLATES } from "@/lib/jd-templates";
+import { useTheme } from "@/lib/theme";
 
 // Free models shown in UI (matching portfolio setup)
 const MODELS = [
@@ -163,7 +166,7 @@ function LoadingState({ message }: { message: string }) {
         <div className="absolute -inset-4 rounded-3xl bg-purple-500/5 animate-ping" />
       </div>
       <div className="text-center space-y-4">
-        <p className="text-base sm:text-lg md:text-xl font-medium text-white">{message}</p>
+        <p className="text-base sm:text-lg md:text-xl font-medium text-[var(--text-primary)]">{message}</p>
         <div className="flex justify-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-purple-400 loading-dot" />
           <div className="w-2.5 h-2.5 rounded-full bg-blue-400 loading-dot" />
@@ -189,6 +192,7 @@ export default function PipelinePage() {
   const [autoPilot, setAutoPilot] = useState(false);
   const [autoPilotStatus, setAutoPilotStatus] = useState("");
   const [copied, setCopied] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     setHistory(getHistory());
@@ -458,8 +462,8 @@ export default function PipelinePage() {
       
       {/* Floating Controls */}
       <div className="fixed top-3 sm:top-4 left-3 sm:left-5 z-50">
-        <Link href="/" className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all group hover:scale-105" style={{ background: 'rgba(15, 16, 22, 0.85)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <ArrowLeft className="w-4 h-4 text-[var(--text-muted)] group-hover:text-white transition-colors" />
+        <Link href="/" className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all group hover:scale-105" style={{ background: 'var(--bg-card)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}>
+          <ArrowLeft className="w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-colors" />
           <div className="w-6 h-6 rounded-md bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
             <Sparkles className="w-3 h-3 text-white" />
           </div>
@@ -468,9 +472,21 @@ export default function PipelinePage() {
       </div>
       <div className="fixed top-3 sm:top-4 right-3 sm:right-5 z-50 flex items-center gap-2">
         <button
+          onClick={toggleTheme}
+          className="p-2.5 rounded-xl transition-all hover:scale-105 group"
+          style={{ background: 'var(--bg-card)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? (
+            <Sun className="w-4 h-4 text-[var(--text-muted)] group-hover:text-yellow-300 transition-colors" />
+          ) : (
+            <Moon className="w-4 h-4 text-[var(--text-muted)] group-hover:text-purple-400 transition-colors" />
+          )}
+        </button>
+        <button
           onClick={() => { setShowHistory(!showHistory); refreshHistory(); }}
           className="relative p-2.5 rounded-xl transition-all hover:scale-105 group"
-          style={{ background: 'rgba(15, 16, 22, 0.85)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ background: 'var(--bg-card)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}
           title="History"
         >
           <History className="w-4 h-4 text-[var(--text-muted)] group-hover:text-purple-300 transition-colors" />
@@ -484,7 +500,7 @@ export default function PipelinePage() {
           <button
             onClick={() => setShowModelDropdown(!showModelDropdown)}
             className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all hover:scale-105 text-sm group"
-            style={{ background: 'rgba(15, 16, 22, 0.85)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)' }}
+            style={{ background: 'var(--bg-card)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}
           >
             <Brain className="w-4 h-4 text-purple-400 group-hover:text-purple-300" />
             <span className="hidden sm:inline text-xs">{selectedModel.name}</span>
@@ -509,7 +525,7 @@ export default function PipelinePage() {
                       "w-full text-left px-3 py-2.5 rounded-lg text-sm flex justify-between items-center transition-colors",
                       model === m.id
                         ? "bg-purple-500/20 text-purple-300"
-                        : "hover:bg-white/5 text-[var(--text-secondary)] hover:text-white"
+                        : "hover:bg-white/5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                     )}
                   >
                     <span className="font-medium text-xs">{m.name}</span>
@@ -585,7 +601,7 @@ export default function PipelinePage() {
                             <User className="w-4 h-4" />
                           </div>
                           <div>
-                            <p className="font-semibold text-sm text-white truncate max-w-[200px]">{entry.name}</p>
+                            <p className="font-semibold text-sm text-[var(--text-primary)] truncate max-w-[200px]">{entry.name}</p>
                             <p className="text-[10px] text-[var(--text-muted)]">
                               {new Date(entry.analyzedAt).toLocaleDateString()} {new Date(entry.analyzedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </p>
@@ -741,7 +757,7 @@ export default function PipelinePage() {
                     </motion.div>
                   ) : (
                     <div className="text-center">
-                      <p className="text-lg sm:text-xl font-medium mb-2 sm:mb-3 text-white">
+                      <p className="text-lg sm:text-xl font-medium mb-2 sm:mb-3 text-[var(--text-primary)]">
                         {isDragActive ? "Drop the resume here..." : "Drag & drop resume here"}
                       </p>
                       <p className="text-[var(--text-muted)]">
@@ -786,7 +802,7 @@ export default function PipelinePage() {
                               <Play className="w-3.5 h-3.5 text-cyan-400" />
                             </div>
                             <div>
-                              <p className="text-sm font-semibold text-white">Auto-Pilot Mode</p>
+                              <p className="text-sm font-semibold text-[var(--text-primary)]">Auto-Pilot Mode</p>
                               <p className="text-[10px] text-[var(--text-muted)]">Pick a JD template, then run the full pipeline</p>
                             </div>
                           </div>
@@ -871,7 +887,7 @@ export default function PipelinePage() {
                       </div>
                       <span className={cn(
                         "text-sm font-medium transition-colors",
-                        isDone ? "text-green-400" : isActive ? "text-white" : "text-[var(--text-muted)]"
+                        isDone ? "text-green-400" : isActive ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"
                       )}>{label}</span>
                     </div>
                   );
@@ -898,7 +914,7 @@ export default function PipelinePage() {
                       <User className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-white">{parsedResume.name}</h3>
+                      <h3 className="text-lg font-bold text-[var(--text-primary)]">{parsedResume.name}</h3>
                       <p className="text-xs text-[var(--text-muted)]">Candidate Profile</p>
                     </div>
                   </div>
@@ -971,7 +987,7 @@ export default function PipelinePage() {
                         {parsedResume.experience.map((exp, i) => (
                           <div key={i} className="pl-5 border-l-2 border-white/10 relative">
                              <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-blue-500/50" />
-                            <h5 className="font-semibold text-white">{exp.title}</h5>
+                            <h5 className="font-semibold text-[var(--text-primary)]">{exp.title}</h5>
                             <p className="text-xs text-blue-300 mb-2">
                               {exp.company} • {exp.duration}
                             </p>
@@ -1001,7 +1017,7 @@ export default function PipelinePage() {
                         {parsedResume.education.map((edu, i) => (
                           <div key={i} className="pl-5 border-l-2 border-white/10 relative">
                             <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-cyan-500/50" />
-                            <p className="text-sm font-medium text-white">{edu.degree}</p>
+                            <p className="text-sm font-medium text-[var(--text-primary)]">{edu.degree}</p>
                             <p className="text-xs text-[var(--text-muted)]">
                               {edu.institution} • {edu.year}
                             </p>
@@ -1018,7 +1034,7 @@ export default function PipelinePage() {
                 <div className="glass-card p-4 sm:p-6 flex flex-col">
                   <div className="pb-4 mb-4 border-b border-[var(--border)]">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-bold text-white">Target Job Description</h3>
+                      <h3 className="text-lg font-bold text-[var(--text-primary)]">Target Job Description</h3>
                       {/* JD Templates */}
                       <div className="relative">
                         <button
@@ -1158,8 +1174,8 @@ export default function PipelinePage() {
                       className="group"
                     >
                       <div className="flex justify-between text-sm mb-2">
-                        <span className="font-medium text-white">{item.category}</span>
-                        <span className="font-mono text-[var(--text-muted)] group-hover:text-white transition-colors">
+                        <span className="font-medium text-[var(--text-primary)]">{item.category}</span>
+                        <span className="font-mono text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-colors">
                           {item.score}/10
                         </span>
                       </div>
@@ -1297,7 +1313,7 @@ export default function PipelinePage() {
                          </span>
                          <span className="text-xs text-[var(--text-muted)] font-mono px-2 py-1">Q{i+1}</span>
                       </div>
-                      <h3 className="text-base sm:text-lg font-medium text-white mb-3 sm:mb-4 leading-relaxed">{q.question}</h3>
+                      <h3 className="text-base sm:text-lg font-medium text-[var(--text-primary)] mb-3 sm:mb-4 leading-relaxed">{q.question}</h3>
                       <div className="space-y-3 mt-5 pt-5 border-t border-white/5">
                         <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                           <span className="text-purple-400 font-semibold">Purpose:</span> {q.purpose}
@@ -1350,7 +1366,7 @@ export default function PipelinePage() {
                       <div className="p-2 bg-purple-500/20 rounded-lg text-purple-300">
                         <BarChart3 className="w-5 h-5" />
                       </div>
-                      <h3 className="text-lg font-bold text-white">Score Results</h3>
+                      <h3 className="text-lg font-bold text-[var(--text-primary)]">Score Results</h3>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] group-hover:text-purple-300 transition-colors">
                       <span>View details</span>
@@ -1387,7 +1403,7 @@ export default function PipelinePage() {
                               item.score >= 8 ? "bg-green-400" : item.score >= 5 ? "bg-amber-400" : "bg-red-400"
                             )} />
                             <span className="text-[var(--text-muted)]">{item.category}</span>
-                            <span className="font-mono font-semibold text-white">{item.score}/{item.maxScore}</span>
+                            <span className="font-mono font-semibold text-[var(--text-primary)]">{item.score}/{item.maxScore}</span>
                           </div>
                         ))}
                       </div>
@@ -1408,7 +1424,7 @@ export default function PipelinePage() {
                       <div className="p-2 bg-green-500/20 rounded-lg text-green-300">
                         <MessageSquareText className="w-5 h-5" />
                       </div>
-                      <h3 className="text-lg font-bold text-white">Interview Questions</h3>
+                      <h3 className="text-lg font-bold text-[var(--text-primary)]">Interview Questions</h3>
                       <span className="text-xs bg-white/5 px-2 py-0.5 rounded-full text-[var(--text-muted)]">{questions.length} questions</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] group-hover:text-green-300 transition-colors">
@@ -1422,7 +1438,7 @@ export default function PipelinePage() {
                       <div key={i} className="flex items-start gap-3 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/5">
                         <span className="text-xs font-mono text-[var(--text-muted)] mt-0.5">Q{i + 1}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-white truncate">{q.question}</p>
+                          <p className="text-sm text-[var(--text-primary)] truncate">{q.question}</p>
                           <span className={cn(
                             "text-[10px] font-bold uppercase mt-1 inline-block",
                             q.difficulty === "hard" ? "text-red-400" : q.difficulty === "medium" ? "text-amber-400" : "text-green-400"
