@@ -718,7 +718,7 @@ export default function PipelinePage() {
               className="max-w-2xl mx-auto"
             >
               <div className="text-center mb-4 sm:mb-5">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Upload Candidate Resume</h2>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-[var(--text-primary)] to-[var(--text-secondary)] bg-clip-text text-transparent">Upload Candidate Resume</h2>
                 <p className="text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed px-2 sm:px-0">
                   Supports PDF and TXT formats. AI will parse details automatically.
                 </p>

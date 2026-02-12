@@ -38,7 +38,7 @@
 .light {
   --bg-primary: #f8fafc;
   --bg-secondary: #f1f5f9;
-  --bg-card: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.95);
   --bg-card-hover: #f8fafc;
   
   --accent-purple: #7c3aed;
@@ -51,19 +51,24 @@
   --accent-amber: #d97706;
   --accent-red: #dc2626;
 
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  --text-primary: #020617;
+  --text-secondary: #1e293b;
+  --text-muted: #475569;
   
-  --border: #e2e8f0;
-  --glass: rgba(255, 255, 255, 0.7);
-  --glass-hover: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --glass-highlight: rgba(0, 0, 0, 0.12);
+  --border: #cbd5e1;
+  --glass: rgba(255, 255, 255, 0.75);
+  --glass-hover: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-highlight: rgba(0, 0, 0, 0.15);
+
+  /* light-mode equivalents of white-alpha patterns */
+  --surface-overlay: rgba(0, 0, 0, 0.03);
+  --surface-overlay-hover: rgba(0, 0, 0, 0.06);
+  --surface-border: rgba(0, 0, 0, 0.08);
 
   --scrollbar-track: #f8fafc;
-  --scrollbar-thumb: #cbd5e1;
-  --scrollbar-thumb-hover: #94a3b8;
+  --scrollbar-thumb: #94a3b8;
+  --scrollbar-thumb-hover: #64748b;
   
   color-scheme: light;
 }
@@ -225,6 +230,51 @@
   .light .glass-card-solid:hover {
     border-color: rgba(124, 58, 237, 0.3);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  }
+
+  /* ── Light mode: flip white-alpha to dark-alpha ── */
+  /* bg-white/5, bg-white/[0.02], bg-white/[0.03], bg-white/[0.04] → subtle dark overlays */
+  .light .bg-white\/5,
+  .light .bg-white\/\[0\.02\],
+  .light .bg-white\/\[0\.03\],
+  .light .bg-white\/\[0\.04\] {
+    background-color: rgba(0, 0, 0, 0.03) !important;
+  }
+
+  .light .bg-white\/10,
+  .light .hover\:bg-white\/5:hover,
+  .light .hover\:bg-white\/\[0\.03\]:hover,
+  .light .hover\:bg-white\/\[0\.04\]:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .light .hover\:bg-white\/10:hover {
+    background-color: rgba(0, 0, 0, 0.07) !important;
+  }
+
+  /* border-white/5, border-white/10 → subtle dark borders */
+  .light .border-white\/5 {
+    border-color: rgba(0, 0, 0, 0.06) !important;
+  }
+
+  .light .border-white\/10,
+  .light .border-t.border-white\/10 {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+
+  /* hover:text-white → hover:text-primary in light mode */
+  .light .hover\:text-white:hover {
+    color: var(--text-primary) !important;
+  }
+
+  /* from/via/to-white/X gradient connectors */
+  .light .from-white\/20 { --tw-gradient-from: rgba(0,0,0,0.08); }
+  .light .via-white\/40 { --tw-gradient-via: rgba(0,0,0,0.12); }
+  .light .to-white\/20 { --tw-gradient-to: rgba(0,0,0,0.08); }
+
+  /* glow-text should not glow white in light mode */
+  .light .glow-text {
+    text-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
   }
 }
 

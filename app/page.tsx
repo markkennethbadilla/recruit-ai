@@ -127,7 +127,7 @@ export default function Home() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs sm:text-sm font-medium mb-6 sm:mb-10 hover:bg-purple-500/20 transition-colors cursor-default"
+              className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-[var(--accent-purple)] text-xs sm:text-sm font-medium mb-6 sm:mb-10 hover:bg-purple-500/20 transition-colors cursor-default"
             >
               <Brain className="w-4 h-4" />
               <span>Next-Gen AI Recruiting Pipeline</span>
@@ -145,9 +145,9 @@ export default function Home() {
 
             <p className="text-base sm:text-lg md:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed px-2 sm:px-0">
               Transform your hiring process with autonomous AI. Upload a resume and get 
-              <span className="text-white font-medium"> structured data</span>, 
-              <span className="text-white font-medium"> fit scores</span>, and 
-              <span className="text-white font-medium"> tailored questions</span> in under 30 seconds.
+              <span className="text-[var(--text-primary)] font-medium"> structured data</span>, 
+              <span className="text-[var(--text-primary)] font-medium"> fit scores</span>, and 
+              <span className="text-[var(--text-primary)] font-medium"> tailored questions</span> in under 30 seconds.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
@@ -241,7 +241,7 @@ export default function Home() {
               <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto mb-4 sm:mb-6 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
                 <stat.icon className="w-5 h-5 sm:w-7 sm:h-7 text-purple-400 group-hover:text-purple-300 transition-colors" />
               </div>
-              <h3 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+              <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
                 {stat.label}
               </h3>
               <div className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-[var(--text-primary)] to-[var(--text-secondary)] bg-clip-text text-transparent mb-2">
