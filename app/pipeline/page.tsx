@@ -51,6 +51,7 @@ import type {
 import { cn } from "@/lib/utils";
 import { getHistory, saveToHistory, deleteFromHistory, clearHistory, type HistoryEntry } from "@/lib/candidate-history";
 import { exportPDFReport } from "@/lib/pdf-export";
+import { openPrintReport } from "@/lib/print-report";
 import { JD_TEMPLATES } from "@/lib/jd-templates";
 import { useTheme } from "@/lib/theme";
 
@@ -425,7 +426,7 @@ export default function PipelinePage() {
 
   function handleExportPDF() {
     if (!parsedResume) return;
-    exportPDFReport({ parsedResume, scoring, questions, jobDescription, model: selectedModel.name });
+    openPrintReport({ parsedResume, scoring, questions, jobDescription, model: selectedModel.name });
   }
 
   function loadHistoryEntry(entry: HistoryEntry) {
