@@ -242,6 +242,7 @@
   }
 
   .light .bg-white\/10,
+  .light .bg-white\/20,
   .light .hover\:bg-white\/5:hover,
   .light .hover\:bg-white\/\[0\.03\]:hover,
   .light .hover\:bg-white\/\[0\.04\]:hover {
@@ -276,6 +277,30 @@
   .light .glow-text {
     text-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
   }
+
+  /* Light mode: darken pastel text colors for sufficient contrast */
+  .light .text-purple-300 { color: #7c3aed !important; }
+  .light .text-purple-400 { color: #7c3aed !important; }
+  .light .text-green-300 { color: #059669 !important; }
+  .light .text-emerald-300 { color: #059669 !important; }
+  .light .text-red-200 { color: #dc2626 !important; }
+  .light .text-red-400 { color: #dc2626 !important; }
+  .light .text-cyan-300 { color: #0891b2 !important; }
+  .light .text-cyan-400 { color: #0891b2 !important; }
+  .light .text-amber-300 { color: #d97706 !important; }
+  .light .text-amber-400 { color: #d97706 !important; }
+  .light .text-blue-300 { color: #2563eb !important; }
+  .light .text-blue-400 { color: #2563eb !important; }
+
+  /* Light mode: group-hover pastel colors */
+  .light .group-hover\:text-purple-300:hover,
+  .light .group:hover .group-hover\:text-purple-300 { color: #6d28d9 !important; }
+  .light .group-hover\:text-purple-400:hover,
+  .light .group:hover .group-hover\:text-purple-400 { color: #6d28d9 !important; }
+  .light .group-hover\:text-green-300:hover,
+  .light .group:hover .group-hover\:text-green-300 { color: #047857 !important; }
+  .light .hover\:text-red-400:hover { color: #dc2626 !important; }
+  .light .hover\:text-purple-400:hover { color: #6d28d9 !important; }
 }
 
 /* Custom Scrollbar */

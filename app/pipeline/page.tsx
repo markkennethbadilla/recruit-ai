@@ -655,12 +655,13 @@ export default function PipelinePage() {
               const isActive = i === currentStepIndex;
               const isDone = i < currentStepIndex;
               const isReachable = i <= highestReached && i !== currentStepIndex;
+              const isLight = theme === "light";
               return (
                 <div key={s.id} className="flex items-center">
                   <motion.div
                     animate={{
                       backgroundColor: isActive ? "rgba(139, 92, 246, 0.2)" : isDone ? "rgba(16, 185, 129, 0.2)" : (i <= highestReached && i > currentStepIndex) ? "rgba(139, 92, 246, 0.08)" : "transparent",
-                      color: isActive ? "#d8b4fe" : isDone ? "#6ee7b7" : (i <= highestReached && i > currentStepIndex) ? "#a78bfa" : "#64748b",
+                      color: isActive ? (isLight ? "#7c3aed" : "#d8b4fe") : isDone ? (isLight ? "#059669" : "#6ee7b7") : (i <= highestReached && i > currentStepIndex) ? (isLight ? "#7c3aed" : "#a78bfa") : (isLight ? "#475569" : "#64748b"),
                     }}
                     className={cn(
                       "flex items-center gap-1.5 sm:gap-2.5 px-3 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium transition-all duration-300",
