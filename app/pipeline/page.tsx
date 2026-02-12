@@ -1307,10 +1307,16 @@ export default function PipelinePage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05 }}
-                      className="glass-card p-4 sm:p-5 md:p-6 border-l-4 border-l-purple-500"
+                      className={cn(
+                        "glass-card p-4 sm:p-5 md:p-6 border-l-4",
+                        q.difficulty === "hard" ? "border-l-red-500" : q.difficulty === "medium" ? "border-l-amber-500" : "border-l-green-500"
+                      )}
                     >
                       <div className="flex justify-between items-start mb-4">
-                         <span className="px-3 py-1.5 bg-purple-500/10 text-purple-300 text-xs font-bold rounded-lg uppercase tracking-wider">
+                         <span className={cn(
+                           "px-3 py-1.5 text-xs font-bold rounded-lg uppercase tracking-wider",
+                           q.difficulty === "hard" ? "bg-red-500/10 text-red-400" : q.difficulty === "medium" ? "bg-amber-500/10 text-amber-400" : "bg-green-500/10 text-green-400"
+                         )}>
                            {q.difficulty}
                          </span>
                          <span className="text-xs text-[var(--text-muted)] font-mono px-2 py-1">Q{i+1}</span>
