@@ -16,11 +16,6 @@ export const metadata: Metadata = {
   title: "TalentFlow AI — Intelligent Recruiting Pipeline",
   description:
     "AI-powered recruiting pipeline that parses resumes, scores candidates, and generates tailored screening questions.",
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-    ],
-  },
   themeColor: "#8b5cf6",
   viewport: "width=device-width, initial-scale=1",
 };
