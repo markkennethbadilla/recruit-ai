@@ -2,7 +2,7 @@
 
 AI-powered candidate screening pipeline. Upload a resume, paste a job description, and get instant AI analysis.
 
-**Live:** [recruit.elunari.uk](https://recruit.elunari.uk)
+**Live:** [talentflow-ai.elunari.uk](https://talentflow-ai.elunari.uk)
 
 ## Features
 

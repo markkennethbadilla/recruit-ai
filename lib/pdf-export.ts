@@ -252,7 +252,7 @@ export function exportPDFReport({
   doc.setFontSize(5.5);
   doc.setTextColor(...colors.muted);
   doc.text(
-    `TalentFlow AI • talentai.elunari.uk • Generated ${new Date().toLocaleDateString()}`,
+    `TalentFlow AI • talentflow-ai.elunari.uk • Generated ${new Date().toLocaleDateString()}`,
     pageWidth / 2,
     pageHeight - 6,
     { align: "center" }
