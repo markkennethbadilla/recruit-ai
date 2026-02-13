@@ -1,8 +1,8 @@
-# TalentFlow AI (recruit-ai)
+# TalentFlow AI
 
 AI-powered candidate screening pipeline with n8n workflow orchestration. Upload a resume, paste a job description, and get instant AI analysis — then let automated workflows handle outreach, data sync, and monitoring.
 
-**Live:** [recruit.elunari.uk](https://recruit.elunari.uk)
+**Live:** [talentflow-ai.elunari.uk](https://talentflow-ai.elunari.uk)
 
 ## Features
 
