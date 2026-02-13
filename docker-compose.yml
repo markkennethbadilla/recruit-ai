@@ -11,6 +11,13 @@ services:
       - n8n
     networks:
       - talentflow-net
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+          cpus: "1.0"
+        reservations:
+          memory: 512M
 
   n8n:
     image: n8nio/n8n:latest
@@ -23,8 +30,38 @@ services:
     environment:
       - N8N_BASIC_AUTH_ACTIVE=false
       - GENERIC_TIMEZONE=Asia/Manila
+      - N8N_HOST=n8n.elunari.uk
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://n8n.elunari.uk/
     networks:
       - talentflow-net
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+          cpus: "1.0"
+        reservations:
+          memory: 256M
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - talentflow
+      - n8n
+    networks:
+      - talentflow-net
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+        reservations:
+          memory: 64M
 
 volumes:
   n8n_data:

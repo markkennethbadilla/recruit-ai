@@ -105,49 +105,119 @@ cloudflared tunnel --url http://localhost:3003
 
 ---
 
-## Option C: Cloud VPS (Cheapest Production Grade)
+## Option C: Spare Laptop Server (Recommended — 24/7 Free)
 
-If you need real uptime guarantees:
+**Windows laptop running Docker Desktop with Cloudflare Tunnel**
 
-| Provider | Specs | Cost/mo |
-|----------|-------|---------|
-| **Oracle Cloud** (FREE tier) | 4 ARM cores, 24GB RAM | $0 |
-| **Hetzner** | 2 vCPU, 4GB RAM | ~$4 |
-| **DigitalOcean** | 1 vCPU, 1GB RAM | $6 |
-| **Railway** | Usage-based | ~$5 |
+Target specs: i5-8th-gen, 8GB RAM, Windows 10/11
 
-### Oracle Cloud (FREE — best option)
-Oracle offers **Always Free** ARM instances: 4 Ampere cores, 24GB RAM, 200GB storage.
+### Pros
+- Truly zero cost (just electricity)
+- Full-featured n8n with unlimited workflows
+- Cloudflare tunnel already configured for `elunari.uk`
+- Auto-starts on boot
+- Thermal-optimized for 24/7 operation
 
+### One-Shot Setup
+
+```powershell
+# Prerequisites: Docker Desktop installed, sleep=never, lid close=stay awake
+cd E:\recruit-ai
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\laptop-setup.ps1
+```
+
+The script handles everything:
+- Verifies Docker Desktop is running
+- Configures WSL2 resource limits (4GB RAM, 2 CPUs)
+- Creates `.env.local` from template (tunnel token pre-filled)
+- Applies thermal-safe power settings (CPU capped 80%, passive cooling)
+- Builds & starts all Docker services
+- Creates scheduled task for auto-start on login
+
+### Cloudflare Tunnel (Already Configured)
+
+Tunnel `elunari-server` is already created with both routes:
+
+| Subdomain | Domain     | Service                    |
+|-----------|------------|----------------------------|
+| `app`     | elunari.uk | `http://talentflow:3000`   |
+| `n8n`     | elunari.uk | `http://n8n:5678`          |
+
+The tunnel token is pre-filled in `.env.example`. Just run `laptop-setup.ps1` and press Enter when prompted.
+
+### Docker Resource Limits (8GB System)
+
+| Service      | RAM Limit | CPU Limit | Reserved RAM |
+|-------------|-----------|-----------|--------------|
+| talentflow  | 1536 MB   | 1.0 core  | 512 MB       |
+| n8n         | 1024 MB   | 1.0 core  | 256 MB       |
+| cloudflared | 256 MB    | 0.25 core | 64 MB        |
+| **WSL2 VM** | **4096 MB** | **2 cores** | —          |
+
+Remaining ~4GB stays for Windows + Docker Desktop overhead.
+
+### Thermal Configuration
+
+The setup script applies these power settings:
+- **Balanced** power plan (not high performance)
+- CPU max throttle: **80%** (prevents thermal throttling loop)
+- CPU min throttle: **5%** (allows deep idle)
+- Cooling policy: **Passive** (quieter, less heat)
+- Monitor off after 5 minutes
+- USB selective suspend disabled (prevents Docker disconnects)
+
+### After Setup
+
+1. Visit `https://n8n.elunari.uk` → create admin account
+2. Go to Settings → API → generate API key
+3. Add `N8N_API_KEY=...` to `.env.local`
+4. Provision workflows:
+   ```powershell
+   cd E:\recruit-ai
+   node n8n/provision.mjs
+   ```
+5. Verify at `https://app.elunari.uk`
+
+### Linux VPS Alternative
+
+For cloud hosting later, a setup script for Linux is also available:
 ```bash
-# On Oracle Cloud VM
-sudo apt update && sudo apt install -y docker.io docker-compose
-git clone <your-repo>
-cd recruit-ai
-docker compose up -d
+bash oracle-setup.sh   # Works on Ubuntu, Debian, RHEL, Oracle Linux
 ```
 
 ---
 
 ## Recommendation
 
-For your interview demo: **Option A** — Vercel + Docker on other laptop with Cloudflare Tunnel.
+**Primary: Option C — Spare Windows laptop** with `elunari.uk` via Cloudflare Tunnel.
+- 24/7 uptime, zero cost, real production environment
+- One-shot `laptop-setup.ps1` handles everything (Docker + power + thermal + auto-start)
+- Cloudflare tunnel `elunari-server` already configured with routes:
+  - `app.elunari.uk` → `http://talentflow:3000`
+  - `n8n.elunari.uk` → `http://n8n:5678`
+- Tunnel token pre-filled in .env.example — just run and go
+- Docker resource limits tuned for 8GB RAM i5 laptop
 
-For long-term: **Option C with Oracle Cloud FREE tier** — 24/7 uptime, zero cost, real production environment.
+**Fallback: Option A** — Vercel (frontend) + local Docker laptop (n8n) for dev/demo.
 
 ---
 
 ## Environment Variables Reference
 
+See `.env.example` for the full template. Key variables:
+
 ```env
+# Cloudflare Tunnel (from Zero Trust dashboard)
+CLOUDFLARE_TUNNEL_TOKEN=eyJ...
+
 # AI
 OPENROUTER_API_KEY=sk-or-v1-...
 
-# n8n (update URL based on hosting)
-N8N_URL=http://localhost:5678      # local
-# N8N_URL=https://xxx.trycloudflare.com  # production
+# n8n
+N8N_URL=https://n8n.elunari.uk
 N8N_API_KEY=...
-NEXT_PUBLIC_N8N_URL=... # same as N8N_URL
+NEXT_PUBLIC_N8N_URL=https://n8n.elunari.uk
 
 # AirTable
 AIRTABLE_API_KEY=patOMR...
@@ -156,8 +226,11 @@ AIRTABLE_TABLE_NAME=Candidates
 
 # ElevenLabs
 ELEVENLABS_API_KEY=sk_443...
+
+# App
+APP_URL=https://app.elunari.uk
 ```
 
 ## Docker Compose (for self-hosted)
 
-See `docker-compose.yml` in project root.
+See `docker-compose.yml` in project root — includes Next.js, n8n, and cloudflared services.
