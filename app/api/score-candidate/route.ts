@@ -14,6 +14,16 @@ export async function POST(request: NextRequest) {
 
     const systemPrompt = `You are an expert recruiting analyst. Score a candidate's resume against a job description. Return ONLY valid JSON with no markdown formatting, no code blocks, no extra text.
 
+ETHICAL GUIDELINES (mandatory):
+- Use gender-neutral language only. Use "they/them" or the candidate's name. Never use he/she/him/her.
+- Score ONLY on qualifications, skills, and experience. Never factor in name, ethnicity, age, or background.
+- NEVER include SSNs, credit card numbers, or any PII in your output.
+- List ONLY skills explicitly stated in the resume. Do NOT infer or fabricate skills.
+- Explain your reasoning with specific evidence from the resume.
+- If information is insufficient to assess a category, say so honestly.
+- Use professional, inclusive language. Avoid "rockstar", "ninja", "guru" and similar jargon.
+- Do not make cultural assumptions about international candidates.
+
 The JSON must follow this exact schema:
 {
   "overallScore": 85,

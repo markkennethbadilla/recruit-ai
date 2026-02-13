@@ -41,6 +41,12 @@ import {
   ClipboardList,
   Sun,
   Moon,
+  Mic,
+  Database,
+  Workflow,
+  Volume2,
+  ExternalLink,
+  Globe,
 } from "lucide-react";
 import type {
   ParsedResume,
@@ -54,16 +60,21 @@ import { exportPDFReport } from "@/lib/pdf-export";
 import { openPrintReport } from "@/lib/print-report";
 import { JD_TEMPLATES } from "@/lib/jd-templates";
 import { useTheme } from "@/lib/theme";
+import { PageTips, TipsToggle, usePageTips } from "@/lib/tips";
 
 // Free models shown in UI (matching portfolio setup)
 const MODELS = [
+  { id: "auto", name: "Auto (Smart)", speed: "Picks best available" },
   { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70B", speed: "Best" },
   { id: "google/gemma-3-27b-it:free", name: "Gemma 3 27B", speed: "Fast" },
   { id: "mistralai/mistral-small-3.1-24b-instruct:free", name: "Mistral Small 3.1", speed: "Balanced" },
+  { id: "qwen/qwen3-32b:free", name: "Qwen3 32B", speed: "Fast" },
+  { id: "microsoft/phi-4-reasoning-plus:free", name: "Phi-4 Reasoning", speed: "Balanced" },
+  { id: "nousresearch/deephermes-3-llama-3-8b-preview:free", name: "DeepHermes 8B", speed: "Fast" },
 ];
 
 // Paid fallback (not user-selectable, used automatically on rate limits)
-export const FALLBACK_MODEL = "openai/gpt-4o";
+export const FALLBACK_MODEL = "openai/gpt-4o-mini";
 
 const SAMPLE_JD = `AI Engineer — WeAssist.io (Internal)
 
@@ -178,6 +189,16 @@ function LoadingState({ message }: { message: string }) {
   );
 }
 
+// Integration result types for pipeline summary
+interface IntegrationResults {
+  airtable: { success: boolean; recordId?: string; error?: string } | null;
+  n8n: { connected: boolean; outreach?: boolean } | null;
+  elevenlabs: { success: boolean; audioBase64?: string; contentType?: string; characterCount?: number; charsRemaining?: number } | null;
+  voiceScript?: string;
+  emailPrompt?: string;
+  tone?: string;
+}
+
 export default function PipelinePage() {
   const [state, setState] = useState<PipelineState>({ step: "upload" });
   const [file, setFile] = useState<File | null>(null);
@@ -193,14 +214,41 @@ export default function PipelinePage() {
   const [autoPilot, setAutoPilot] = useState(false);
   const [autoPilotStatus, setAutoPilotStatus] = useState("");
   const [copied, setCopied] = useState(false);
+  const [integrationResults, setIntegrationResults] = useState<IntegrationResults | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [rateLimitedModels, setRateLimitedModels] = useState<string[]>([]);
   const { theme, toggleTheme } = useTheme();
+  const pipelineTips = usePageTips("pipeline");
 
   useEffect(() => {
     setHistory(getHistory());
   }, []);
 
+  // Poll rate-limited model status every 30s
+  useEffect(() => {
+    async function checkModels() {
+      try {
+        const res = await fetch("/api/models/status");
+        if (res.ok) {
+          const data = await res.json();
+          setRateLimitedModels(data.rateLimited || []);
+        }
+      } catch { /* ignore */ }
+    }
+    checkModels();
+    const interval = setInterval(checkModels, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   function refreshHistory() {
     setHistory(getHistory());
+  }
+
+  // Resolve "auto" model to the first non-rate-limited free model
+  function resolveModel(): string {
+    if (model !== "auto") return model;
+    const freeModels = MODELS.filter(m => m.id !== "auto" && !rateLimitedModels.includes(m.id));
+    return freeModels.length > 0 ? freeModels[0].id : "meta-llama/llama-3.3-70b-instruct:free";
   }
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -264,9 +312,10 @@ export default function PipelinePage() {
     setState({ step: "parsing" });
 
     try {
+      const resolvedModel = resolveModel();
       const formData = new FormData();
       formData.append("resume", file);
-      formData.append("model", model);
+      formData.append("model", resolvedModel);
 
       const res = await fetch("/api/parse-resume", { method: "POST", body: formData });
       const data = await res.json();
@@ -289,7 +338,7 @@ export default function PipelinePage() {
       const res = await fetch("/api/score-candidate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ parsedResume, jobDescription, model }),
+        body: JSON.stringify({ parsedResume, jobDescription, model: resolveModel() }),
       });
       const data = await res.json();
 
@@ -315,7 +364,7 @@ export default function PipelinePage() {
           parsedResume,
           jobDescription,
           scoringResult: scoring,
-          model,
+          model: resolveModel(),
         }),
       });
       const data = await res.json();
@@ -356,6 +405,8 @@ export default function PipelinePage() {
     setState({ step: "upload" });
     setAutoPilot(false);
     setAutoPilotStatus("");
+    setIntegrationResults(null);
+    if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
   }
 
   // Auto-pilot: run entire pipeline in one click
@@ -368,8 +419,9 @@ export default function PipelinePage() {
       setAutoPilotStatus("Parsing resume...");
       setState({ step: "parsing" });
       const formData = new FormData();
+      const resolvedModel = resolveModel();
       formData.append("resume", file);
-      formData.append("model", model);
+      formData.append("model", resolvedModel);
       const parseRes = await fetch("/api/parse-resume", { method: "POST", body: formData });
       const parseData = await parseRes.json();
       if (!parseRes.ok) throw new Error(parseData.error);
@@ -382,7 +434,7 @@ export default function PipelinePage() {
       const scoreRes = await fetch("/api/score-candidate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ parsedResume: parsed, jobDescription, model }),
+        body: JSON.stringify({ parsedResume: parsed, jobDescription, model: resolvedModel }),
       });
       const scoreData = await scoreRes.json();
       if (!scoreRes.ok) throw new Error(scoreData.error);
@@ -395,7 +447,7 @@ export default function PipelinePage() {
       const qRes = await fetch("/api/generate-questions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ parsedResume: parsed, jobDescription, scoringResult, model }),
+        body: JSON.stringify({ parsedResume: parsed, jobDescription, scoringResult, model: resolvedModel }),
       });
       const qData = await qRes.json();
       if (!qRes.ok) throw new Error(qData.error);
@@ -406,7 +458,7 @@ export default function PipelinePage() {
       saveToHistory({
         name: parsed.name || "Unknown",
         email: parsed.email || "",
-        model,
+        model: resolvedModel,
         jobTitle: jobDescription.split("\n")[0].substring(0, 60),
         score: scoringResult.overallScore,
         recommendation: scoringResult.recommendation,
@@ -416,6 +468,76 @@ export default function PipelinePage() {
         jobDescription,
       });
       refreshHistory();
+
+      // Fire n8n + AirTable + ElevenLabs integrations (AWAIT results for demo visibility)
+      setAutoPilotStatus("Syncing to AirTable + generating voice outreach...");
+      const candidatePayload = {
+        name: parsed.name,
+        email: parsed.email,
+        phone: parsed.phone,
+        score: scoringResult.overallScore,
+        recommendation: scoringResult.recommendation,
+        skills: parsed.skills,
+        experience: parsed.experience,
+        education: parsed.education,
+        jobTitle: jobDescription.split("\n")[0].substring(0, 60),
+        model: resolvedModel,
+        processedAt: new Date().toISOString(),
+      };
+
+      // Run all integrations in parallel and AWAIT results
+      const [syncRes, outreachRes] = await Promise.allSettled([
+        // WF3 + AirTable: Sync candidate data
+        fetch("/api/n8n/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(candidatePayload),
+        }).then(r => r.json()).catch(() => ({ success: false, error: "Sync failed" })),
+        // WF2 + ElevenLabs: Generate outreach + voice
+        fetch("/api/n8n/outreach", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            candidateName: parsed.name || "Unknown",
+            candidateEmail: parsed.email || "",
+            overallScore: scoringResult.overallScore,
+            strengths: scoringResult.strengths || [],
+            gaps: scoringResult.gaps || [],
+            jobTitle: jobDescription.split("\n")[0].substring(0, 60),
+            companyName: "WeAssist",
+          }),
+        }).then(r => r.json()).catch(() => ({ success: false, error: "Outreach failed" })),
+      ]);
+
+      // Build integration results for summary display
+      const syncData = syncRes.status === "fulfilled" ? syncRes.value : null;
+      const outreachData = outreachRes.status === "fulfilled" ? outreachRes.value : null;
+
+      const results: IntegrationResults = {
+        airtable: syncData ? { success: syncData.airtable?.success || false, recordId: syncData.airtable?.recordId, error: syncData.airtable?.error } : null,
+        n8n: { connected: (syncData?.n8n?.connected || false) || (outreachData?.n8nConnected || false), outreach: outreachData?.success || false },
+        elevenlabs: outreachData?.voiceAudio ? {
+          success: true,
+          audioBase64: outreachData.voiceAudio.base64,
+          contentType: outreachData.voiceAudio.contentType,
+          characterCount: outreachData.voiceAudio.characterCount,
+          charsRemaining: outreachData.elevenLabsUsage?.remaining,
+        } : { success: outreachData?.elevenLabsConnected || false },
+        voiceScript: outreachData?.voiceScript,
+        emailPrompt: outreachData?.emailPrompt,
+        tone: outreachData?.tone,
+      };
+      setIntegrationResults(results);
+
+      // Create audio URL for playback if voice was generated
+      if (outreachData?.voiceAudio?.base64) {
+        const binaryStr = atob(outreachData.voiceAudio.base64);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+        const blob = new Blob([bytes], { type: outreachData.voiceAudio.contentType || "audio/mpeg" });
+        setAudioUrl(URL.createObjectURL(blob));
+      }
+
       setAutoPilotStatus("Complete!");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Pipeline failed";
@@ -463,7 +585,7 @@ export default function PipelinePage() {
       
       {/* Floating Controls */}
       <div className="fixed top-3 sm:top-4 left-3 sm:left-5 z-50">
-        <Link href="/" className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all group hover:scale-105" style={{ background: 'var(--bg-card)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}>
+        <Link href="/" className="glass-chip flex items-center gap-2 px-3 py-2 rounded-xl transition-all group hover:scale-105">
           <ArrowLeft className="w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-colors" />
           <div className="w-6 h-6 rounded-md bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
             <Sparkles className="w-3 h-3 text-white" />
@@ -471,11 +593,19 @@ export default function PipelinePage() {
           <span className="font-semibold text-sm hidden sm:inline">TalentFlow</span>
         </Link>
       </div>
-      <div className="fixed top-3 sm:top-4 right-3 sm:right-5 z-50 flex items-center gap-2">
+      <div className="fixed top-3 sm:top-4 right-3 sm:right-5 z-50 flex items-center gap-1 sm:gap-2">
+        <TipsToggle />
+        <Link
+          href="/automations"
+          className="glass-chip flex items-center gap-1.5 px-2 sm:px-3 py-2 rounded-xl transition-all hover:scale-105 group text-sm"
+          title="Automations Dashboard"
+        >
+          <Zap className="w-4 h-4 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
+          <span className="hidden sm:inline text-xs">Automations</span>
+        </Link>
         <button
           onClick={toggleTheme}
-          className="p-2.5 rounded-xl transition-all hover:scale-105 group"
-          style={{ background: 'var(--bg-card)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}
+          className="glass-chip p-2 sm:p-2.5 rounded-xl transition-all hover:scale-105 group"
           title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {theme === 'dark' ? (
@@ -486,8 +616,7 @@ export default function PipelinePage() {
         </button>
         <button
           onClick={() => { setShowHistory(!showHistory); refreshHistory(); }}
-          className="relative p-2.5 rounded-xl transition-all hover:scale-105 group"
-          style={{ background: 'var(--bg-card)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}
+          className="glass-chip relative p-2 sm:p-2.5 rounded-xl transition-all hover:scale-105 group"
           title="History"
         >
           <History className="w-4 h-4 text-[var(--text-muted)] group-hover:text-purple-300 transition-colors" />
@@ -500,8 +629,7 @@ export default function PipelinePage() {
         <div className="relative">
           <button
             onClick={() => setShowModelDropdown(!showModelDropdown)}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all hover:scale-105 text-sm group"
-            style={{ background: 'var(--bg-card)', backdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}
+            className="glass-chip flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 rounded-xl transition-all hover:scale-105 text-sm group"
           >
             <Brain className="w-4 h-4 text-purple-400 group-hover:text-purple-300" />
             <span className="hidden sm:inline text-xs">{selectedModel.name}</span>
@@ -515,24 +643,34 @@ export default function PipelinePage() {
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
                 className="absolute right-0 top-full mt-2 w-64 glass-card-solid p-2 shadow-xl z-50 overflow-hidden"
               >
-                {MODELS.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => {
-                      setModel(m.id);
-                      setShowModelDropdown(false);
-                    }}
-                    className={cn(
-                      "w-full text-left px-3 py-2.5 rounded-lg text-sm flex justify-between items-center transition-colors",
-                      model === m.id
-                        ? "bg-purple-500/20 text-purple-300"
-                        : "hover:bg-white/5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                    )}
-                  >
-                    <span className="font-medium text-xs">{m.name}</span>
-                    <span className="text-[10px] text-[var(--text-muted)] opacity-70">{m.speed}</span>
-                  </button>
-                ))}
+                {MODELS.map((m) => {
+                  const isRateLimited = m.id !== "auto" && rateLimitedModels.includes(m.id);
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => {
+                        if (!isRateLimited) {
+                          setModel(m.id);
+                          setShowModelDropdown(false);
+                        }
+                      }}
+                      disabled={isRateLimited}
+                      className={cn(
+                        "w-full text-left px-3 py-2.5 rounded-lg text-sm flex justify-between items-center transition-colors",
+                        model === m.id
+                          ? "bg-purple-500/20 text-purple-300"
+                          : isRateLimited
+                          ? "opacity-30 cursor-not-allowed text-[var(--text-muted)]"
+                          : "hover:bg-white/5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                      )}
+                    >
+                      <span className="font-medium text-xs">{m.name}</span>
+                      <span className="text-[10px] text-[var(--text-muted)] opacity-70">
+                        {isRateLimited ? "rate limited" : m.speed}
+                      </span>
+                    </button>
+                  );
+                })}
               </motion.div>
             )}
           </AnimatePresence>
@@ -647,10 +785,13 @@ export default function PipelinePage() {
         )}
       </AnimatePresence>
 
-      <div className="max-w-6xl mx-auto px-3 sm:px-6 pt-14 sm:pt-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-14 sm:pt-16">
+        <div className={cn("items-start", pipelineTips.length > 0 ? "flex gap-6" : "")}>
+          {/* Main content */}
+          <div className={pipelineTips.length > 0 ? "flex-1 min-w-0" : ""}>
         {/* Progress steps */}
         <div className="flex justify-center mb-4 sm:mb-6">
-          <div className="flex items-center bg-white/5 p-1.5 sm:p-2.5 rounded-full border border-white/5 backdrop-blur-md overflow-x-auto max-w-full">
+          <div className="flex items-center bg-[var(--glass)] p-1 sm:p-2.5 rounded-full border border-[var(--glass-border)] backdrop-blur-md overflow-x-auto max-w-full">
             {steps.map((s, i) => {
               const isActive = i === currentStepIndex;
               const isDone = i < currentStepIndex;
@@ -664,19 +805,19 @@ export default function PipelinePage() {
                       color: isActive ? (isLight ? "#7c3aed" : "#d8b4fe") : isDone ? (isLight ? "#059669" : "#6ee7b7") : (i <= highestReached && i > currentStepIndex) ? (isLight ? "#7c3aed" : "#a78bfa") : (isLight ? "#475569" : "#64748b"),
                     }}
                     className={cn(
-                      "flex items-center gap-1.5 sm:gap-2.5 px-3 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium transition-all duration-300",
+                      "flex items-center gap-1 sm:gap-2.5 px-2 sm:px-6 py-1.5 sm:py-3 rounded-full text-[10px] sm:text-sm font-medium transition-all duration-300",
                       isReachable && "cursor-pointer hover:scale-105 hover:brightness-125"
                     )}
                     onClick={() => isReachable && navigateToStep(i)}
                     title={isReachable ? `Go to ${s.label}` : undefined}
                   >
-                    <s.icon className="w-4 h-4" />
+                    <s.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     <span className={cn("transition-opacity", isActive ? "opacity-100" : "opacity-60 hidden md:inline")}>
                       {s.label}
                     </span>
                   </motion.div>
                   {i < steps.length - 1 && (
-                    <div className="w-4 sm:w-8 h-px bg-white/10 mx-0.5 sm:mx-1" />
+                    <div className="w-2 sm:w-8 h-px bg-[var(--glass-border)] mx-0 sm:mx-1" />
                   )}
                 </div>
               );
@@ -1497,6 +1638,145 @@ export default function PipelinePage() {
                   </div>
                 </motion.div>
 
+                {/* Live Integration Results - Demo Section */}
+                {integrationResults && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="mb-6 sm:mb-8"
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-cyan-500/20 rounded-lg text-cyan-300">
+                        <Globe className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-lg font-bold text-[var(--text-primary)]">Live Integration Results</h3>
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+                      </span>
+                    </div>
+
+                    {/* Integration Status Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
+                      {/* n8n Status */}
+                      <div className={cn(
+                        "glass-card p-4 border-l-2",
+                        integrationResults.n8n?.connected ? "border-l-purple-500" : "border-l-gray-500"
+                      )}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Workflow className="w-4 h-4 text-purple-400" />
+                          <span className="text-sm font-semibold text-[var(--text-primary)]">n8n Orchestration</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {integrationResults.n8n?.connected ? (
+                            <><CheckCircle2 className="w-3 h-3 text-green-400" /><span className="text-xs text-green-400">Connected</span></>
+                          ) : (
+                            <><AlertCircle className="w-3 h-3 text-gray-500" /><span className="text-xs text-gray-400">Offline</span></>
+                          )}
+                        </div>
+                        {integrationResults.n8n?.outreach && (
+                          <p className="text-[10px] text-[var(--text-muted)] mt-1">Outreach webhook fired</p>
+                        )}
+                      </div>
+
+                      {/* AirTable Status */}
+                      <div className={cn(
+                        "glass-card p-4 border-l-2",
+                        integrationResults.airtable?.success ? "border-l-emerald-500" : "border-l-gray-500"
+                      )}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Database className="w-4 h-4 text-emerald-400" />
+                          <span className="text-sm font-semibold text-[var(--text-primary)]">AirTable CRM</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {integrationResults.airtable?.success ? (
+                            <><CheckCircle2 className="w-3 h-3 text-green-400" /><span className="text-xs text-green-400">Synced</span></>
+                          ) : (
+                            <><AlertCircle className="w-3 h-3 text-amber-400" /><span className="text-xs text-amber-400">{integrationResults.airtable?.error || "Not synced"}</span></>
+                          )}
+                        </div>
+                        {integrationResults.airtable?.recordId && (
+                          <p className="text-[10px] text-[var(--text-muted)] mt-1 font-mono">ID: {integrationResults.airtable.recordId}</p>
+                        )}
+                      </div>
+
+                      {/* ElevenLabs Status */}
+                      <div className={cn(
+                        "glass-card p-4 border-l-2",
+                        integrationResults.elevenlabs?.success ? "border-l-cyan-500" : "border-l-gray-500"
+                      )}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Mic className="w-4 h-4 text-cyan-400" />
+                          <span className="text-sm font-semibold text-[var(--text-primary)]">ElevenLabs Voice AI</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {integrationResults.elevenlabs?.audioBase64 ? (
+                            <><CheckCircle2 className="w-3 h-3 text-green-400" /><span className="text-xs text-green-400">Audio Generated</span></>
+                          ) : integrationResults.elevenlabs?.success ? (
+                            <><CheckCircle2 className="w-3 h-3 text-green-400" /><span className="text-xs text-green-400">Connected</span></>
+                          ) : (
+                            <><AlertCircle className="w-3 h-3 text-gray-500" /><span className="text-xs text-gray-400">Unavailable</span></>
+                          )}
+                        </div>
+                        {integrationResults.elevenlabs?.characterCount && (
+                          <p className="text-[10px] text-[var(--text-muted)] mt-1">{integrationResults.elevenlabs.characterCount} chars | {integrationResults.elevenlabs.charsRemaining?.toLocaleString()} remaining</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Voice Outreach Card */}
+                    {(integrationResults.voiceScript || integrationResults.emailPrompt) && (
+                      <div className="glass-card p-5 sm:p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Zap className="w-4 h-4 text-orange-400" />
+                          <h4 className="font-bold text-sm">Generated Outreach Content</h4>
+                          {integrationResults.tone && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20">{integrationResults.tone}</span>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {/* Email Prompt */}
+                          {integrationResults.emailPrompt && (
+                            <div>
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <Mail className="w-3 h-3 text-purple-400" />
+                                <span className="text-xs font-medium text-[var(--text-muted)]">Email Prompt</span>
+                              </div>
+                              <div className={cn("text-xs leading-relaxed p-3 rounded-lg max-h-32 overflow-auto", theme === 'dark' ? "bg-black/30 text-gray-300" : "bg-gray-50 text-gray-600")}>
+                                {integrationResults.emailPrompt.substring(0, 500)}
+                                {integrationResults.emailPrompt.length > 500 && "..."}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Voice Script + Player */}
+                          {integrationResults.voiceScript && (
+                            <div>
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <Volume2 className="w-3 h-3 text-cyan-400" />
+                                <span className="text-xs font-medium text-[var(--text-muted)]">Voice Script (ElevenLabs)</span>
+                                {audioUrl && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Audio Ready</span>
+                                )}
+                              </div>
+                              <div className={cn("text-xs leading-relaxed p-3 rounded-lg max-h-24 overflow-auto", theme === 'dark' ? "bg-black/30 text-gray-300" : "bg-gray-50 text-gray-600")}>
+                                {integrationResults.voiceScript}
+                              </div>
+                              {audioUrl && (
+                                <div className="mt-3 flex items-center gap-2">
+                                  <audio controls src={audioUrl} className="w-full h-8 rounded" style={{ filter: theme === 'dark' ? 'invert(1) hue-rotate(180deg)' : 'none' }} />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+
                 {/* Actions */}
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pb-6 sm:pb-10">
                   <button
@@ -1523,6 +1803,14 @@ export default function PipelinePage() {
               </motion.div>
            )}
         </AnimatePresence>
+          </div>
+          {/* Right: Tips sidebar on desktop */}
+          {pipelineTips.length > 0 && (
+            <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0 self-start sticky top-20 max-h-[70vh] overflow-y-auto scrollbar-mini pr-1">
+              <PageTips page="pipeline" />
+            </aside>
+          )}
+        </div>
       </div>
     </div>
   );

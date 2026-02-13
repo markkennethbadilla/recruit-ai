@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef, useEffect, useCallback } from "react";
 import {
   Upload,
   Brain,
@@ -14,9 +14,72 @@ import {
   CheckCircle2,
   Sun,
   Moon,
+  User,
+  BookOpen,
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "@/lib/theme";
+
+/* ── Lightweight IntersectionObserver hook (replaces framer-motion whileInView) ── */
+function useInView() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          el.classList.add("in-view");
+          obs.unobserve(el);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return ref;
+}
+
+/* ── FadeUp component for scroll-triggered sections ── */
+function FadeUp({
+  children,
+  className = "",
+  delay = 0,
+  ...props
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+} & React.HTMLAttributes<HTMLDivElement>) {
+  const ref = useInView();
+  return (
+    <div
+      ref={ref}
+      className={`fade-up ${className}`}
+      style={{ transitionDelay: `${delay}s` }}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ── ScaleIn component for CTA ── */
+function ScaleIn({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const ref = useInView();
+  return (
+    <div ref={ref} className={`scale-in ${className}`}>
+      {children}
+    </div>
+  );
+}
 
 const features = [
   {
@@ -63,15 +126,6 @@ const stats = [
   { icon: Clock, label: "Time Saved", value: "Hours", desc: "Per candidate" },
 ];
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
-  }),
-};
-
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
   return (
@@ -80,7 +134,7 @@ export default function Home() {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-6 py-3 sm:py-5 transition-all duration-300">
         <div className="max-w-7xl mx-auto">
-          <div className="glass-card px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex items-center justify-between" style={{ background: 'var(--bg-card)', backdropFilter: 'blur(20px)' }}>
+          <div className="glass-card px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex items-center justify-between" style={{ background: 'var(--bg-card)' }}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
                 <Sparkles className="w-5 h-5 text-white" />
@@ -99,6 +153,34 @@ export default function Home() {
                 {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-purple-500" />}
               </button>
               <Link
+                href="/automations"
+                className="hidden md:flex items-center gap-2 px-5 py-3 bg-[var(--glass)] hover:bg-[var(--glass-hover)] border border-[var(--glass-border)] rounded-full text-sm font-medium transition-all duration-300 group"
+              >
+                <Zap className="w-4 h-4 text-purple-400" />
+                Automations
+              </Link>
+              <Link
+                href="/apply"
+                className="hidden md:flex items-center gap-2 px-5 py-3 bg-[var(--glass)] hover:bg-[var(--glass-hover)] border border-[var(--glass-border)] rounded-full text-sm font-medium transition-all duration-300 group"
+              >
+                <User className="w-4 h-4 text-cyan-400" />
+                Apply
+              </Link>
+              <Link
+                href="/guide"
+                className="hidden md:flex items-center gap-2 px-5 py-3 bg-[var(--glass)] hover:bg-[var(--glass-hover)] border border-[var(--glass-border)] rounded-full text-sm font-medium transition-all duration-300 group"
+              >
+                <BookOpen className="w-4 h-4 text-emerald-400" />
+                Guide
+              </Link>
+              <Link
+                href="/eval"
+                className="hidden lg:flex items-center gap-2 px-5 py-3 bg-[var(--glass)] hover:bg-[var(--glass-hover)] border border-[var(--glass-border)] rounded-full text-sm font-medium transition-all duration-300 group"
+              >
+                <Shield className="w-4 h-4 text-emerald-400" />
+                AI Ethics
+              </Link>
+              <Link
                 href="/pipeline"
                 className="hidden md:flex items-center gap-2 px-7 py-3 bg-[var(--glass)] hover:bg-[var(--glass-hover)] border border-[var(--glass-border)] rounded-full text-sm font-medium transition-all duration-300 group"
               >
@@ -112,27 +194,12 @@ export default function Home() {
 
       {/* Hero */}
       <section className="relative min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 pt-28 sm:pt-32 md:pt-40 pb-12 sm:pb-20 overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute top-1/4 -left-20 w-48 sm:w-72 md:w-96 h-48 sm:h-72 md:h-96 bg-purple-600/20 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-1/4 -right-20 w-48 sm:w-72 md:w-96 h-48 sm:h-72 md:h-96 bg-blue-600/20 rounded-full blur-[100px] pointer-events-none" />
+        {/* Decorative elements — static gradients instead of blur-[100px] for GPU perf */}
+        <div className="absolute top-1/4 -left-20 w-48 sm:w-72 md:w-96 h-48 sm:h-72 md:h-96 bg-gradient-to-br from-purple-600/15 to-transparent rounded-full pointer-events-none" />
+        <div className="absolute bottom-1/4 -right-20 w-48 sm:w-72 md:w-96 h-48 sm:h-72 md:h-96 bg-gradient-to-bl from-blue-600/15 to-transparent rounded-full pointer-events-none" />
 
         <div className="max-w-6xl mx-auto w-full z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="text-center"
-          >
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-[var(--accent-purple)] text-xs sm:text-sm font-medium mb-6 sm:mb-10 hover:bg-purple-500/20 transition-colors cursor-default"
-            >
-              <Brain className="w-4 h-4" />
-              <span>Next-Gen AI Recruiting Pipeline</span>
-            </motion.div>
-
+          <div className="hero-fade-in text-center">
             <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-6 sm:mb-10 leading-[1.1] tracking-tight">
               <span className="bg-gradient-to-b from-[var(--text-primary)] via-[var(--text-primary)] to-[var(--text-secondary)] bg-clip-text text-transparent">
                 Screen Smarter.
@@ -171,16 +238,11 @@ export default function Home() {
                 <span>Trusted by recruiters</span>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Pipeline visualization */}
           <div className="mt-14 sm:mt-24 md:mt-32">
-            <motion.div
-              initial={{ opacity: 0, y: 60 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="glass-card p-5 sm:p-8 md:p-12 relative overflow-hidden"
-            >
+            <div className="hero-fade-in-delayed glass-card p-5 sm:p-8 md:p-12 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-transparent to-blue-500/5" />
               
               <div className="relative flex flex-wrap justify-center items-center gap-4 sm:gap-8 md:gap-14">
@@ -191,11 +253,9 @@ export default function Home() {
                   { icon: MessageSquareText, label: "Interview", color: "from-emerald-500 to-emerald-700", delay: 0.6 },
                 ].map((step, i, arr) => (
                     <div key={step.label} className="flex items-center gap-2 sm:gap-4 md:gap-8 group">
-                    <motion.div
-                      initial={{ scale: 0, rotate: -10 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{ delay: 0.6 + step.delay, type: "spring", stiffness: 200 }}
-                      className="relative"
+                    <div
+                      className="step-pop-in relative"
+                      style={{ animationDelay: `${0.6 + step.delay}s` }}
                     >
                       <div className={`w-16 h-16 sm:w-22 sm:h-22 md:w-28 md:h-28 rounded-xl sm:rounded-2xl bg-gradient-to-br ${step.color} flex flex-col items-center justify-center gap-1.5 sm:gap-2.5 shadow-lg z-10 relative group-hover:translate-y-[-5px] transition-transform duration-300`}
                       >
@@ -205,22 +265,20 @@ export default function Home() {
                         </span>
                       </div>
                       <div className={`absolute inset-0 bg-gradient-to-br ${step.color} blur-xl opacity-40 group-hover:opacity-60 transition-opacity`} />
-                    </motion.div>
+                    </div>
                     
                     {i < arr.length - 1 && (
-                      <motion.div
-                        initial={{ width: 0, opacity: 0 }}
-                        animate={{ width: "auto", opacity: 1 }}
-                        transition={{ delay: 0.8 + step.delay, duration: 0.5 }}
-                        className="hidden md:block flex-1 min-w-[60px]"
+                      <div
+                        className="line-grow hidden md:block flex-1 min-w-[60px]"
+                        style={{ animationDelay: `${0.8 + step.delay}s` }}
                       >
                          <div className="h-0.5 bg-gradient-to-r from-white/20 via-white/40 to-white/20 w-full rounded-full" />
-                      </motion.div>
+                      </div>
                     )}
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -229,13 +287,9 @@ export default function Home() {
       <section className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 relative">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
           {stats.map((stat, i) => (
-            <motion.div
+            <FadeUp
               key={stat.label}
-              custom={i}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeUp}
+              delay={i * 0.1}
               className="glass-card p-6 sm:p-8 md:p-10 text-center hover:bg-white/[0.04] transition-colors group"
             >
               <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto mb-4 sm:mb-6 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
@@ -250,7 +304,7 @@ export default function Home() {
               <p className="text-[var(--text-secondary)]">
                 {stat.desc}
               </p>
-            </motion.div>
+            </FadeUp>
           ))}
         </div>
       </section>
@@ -260,14 +314,9 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-primary)] to-transparent h-32" />
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-10 sm:mb-14 md:mb-20">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6"
-            >
+            <FadeUp className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6">
               Complete Candidate Analysis
-            </motion.h2>
+            </FadeUp>
             <p className="text-base sm:text-lg md:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto px-2 sm:px-0">
               Everything you need to evaluate candidates effectively, powered by advanced LLMs.
             </p>
@@ -276,12 +325,8 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {features.map((f, i) => (
               <Link key={f.title} href={`/features/${f.slug}`}>
-                <motion.div
-                  custom={i}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true }}
-                  variants={fadeUp}
+                <FadeUp
+                  delay={i * 0.1}
                   className="glass-card-solid p-6 sm:p-8 md:p-10 group hover:-translate-y-2 transition-transform duration-300 cursor-pointer h-full"
                 >
                   <div
@@ -300,9 +345,60 @@ export default function Home() {
                     <span className="mr-2">Learn more</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
-                </motion.div>
+                </FadeUp>
               </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* n8n Automation Section */}
+      <section className="py-16 sm:py-24 md:py-32 px-4 sm:px-6 relative">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-10 sm:mb-14 md:mb-20">
+            <FadeUp className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-xs sm:text-sm font-medium mb-6">
+              <Zap className="w-4 h-4" />
+              <span>Powered by n8n Orchestration</span>
+            </FadeUp>
+            <FadeUp delay={0.1} className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6">
+              Modular Workflow Automation
+            </FadeUp>
+            <p className="text-base sm:text-lg md:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
+              5 independent n8n workflows orchestrate the entire pipeline. Enable, disable, or extend any module without touching code.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {[
+              { icon: Zap, label: "Candidate Intake", desc: "Auto-routes by score, builds Slack/email alerts", color: "text-purple-400", bg: "bg-purple-500/10" },
+              { icon: Upload, label: "Smart Outreach", desc: "Personalized emails + ElevenLabs voice scripts", color: "text-blue-400", bg: "bg-blue-500/10" },
+              { icon: BarChart3, label: "Data Sync", desc: "AirTable/CRM-ready flat records, auto-pushed", color: "text-cyan-400", bg: "bg-cyan-500/10" },
+              { icon: Shield, label: "Health Monitor", desc: "Cron checks every 5 min, alerts on AI failures", color: "text-emerald-400", bg: "bg-emerald-500/10" },
+              { icon: Brain, label: "Pipeline Reports", desc: "Weekly analytics: top skills, gaps, rates", color: "text-amber-400", bg: "bg-amber-500/10" },
+              { icon: CheckCircle2, label: "Modular Design", desc: "Toggle any workflow on/off. Zero code changes.", color: "text-pink-400", bg: "bg-pink-500/10" },
+            ].map((item, i) => (
+              <FadeUp
+                key={item.label}
+                delay={i * 0.1}
+                className="glass-card p-6 sm:p-8 hover:-translate-y-1 transition-transform duration-300"
+              >
+                <div className={`w-12 h-12 rounded-xl ${item.bg} flex items-center justify-center mb-4`}>
+                  <item.icon className={`w-6 h-6 ${item.color}`} />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{item.label}</h3>
+                <p className="text-[var(--text-secondary)] text-sm">{item.desc}</p>
+              </FadeUp>
+            ))}
+          </div>
+
+          <div className="text-center mt-10">
+            <Link
+              href="/automations"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-600 to-purple-600 rounded-full text-base font-semibold text-white shadow-xl shadow-purple-600/20 hover:shadow-purple-600/40 hover:scale-105 transition-all duration-300"
+            >
+              <Zap className="w-5 h-5" />
+              View Automations Dashboard
+            </Link>
           </div>
         </div>
       </section>
@@ -311,12 +407,7 @@ export default function Home() {
       <section className="py-16 sm:py-24 md:py-32 px-4 sm:px-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-purple-900/10 to-transparent pointer-events-none" />
         
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="max-w-4xl mx-auto text-center glass-card p-8 sm:p-12 md:p-16 lg:p-20 relative overflow-hidden border-t border-white/10"
-        >
+        <ScaleIn className="max-w-4xl mx-auto text-center glass-card p-8 sm:p-12 md:p-16 lg:p-20 relative overflow-hidden border-t border-white/10">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5" />
           
           <div className="relative z-10">
@@ -333,7 +424,7 @@ export default function Home() {
               Launch Pipeline <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
-        </motion.div>
+        </ScaleIn>
       </section>
 
       {/* Footer */}
@@ -349,8 +440,10 @@ export default function Home() {
             © 2026 TalentFlow AI. Built with ❤️ for WeAssist.io
           </p>
           <div className="flex gap-6 text-[var(--text-muted)]">
-            <a href="#" className="hover:text-[var(--text-primary)] transition-colors">Privacy</a>
-            <a href="#" className="hover:text-[var(--text-primary)] transition-colors">Terms</a>
+            <Link href="/automations" className="hover:text-[var(--text-primary)] transition-colors">Automations</Link>
+            <Link href="/pipeline" className="hover:text-[var(--text-primary)] transition-colors">Pipeline</Link>
+            <Link href="/guide" className="hover:text-[var(--text-primary)] transition-colors">Guide</Link>
+            <Link href="/eval" className="hover:text-[var(--text-primary)] transition-colors">AI Ethics</Link>
             <a href="#" className="hover:text-[var(--text-primary)] transition-colors">Contact</a>
           </div>
         </div>

@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import dynamic from "next/dynamic";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/theme";
+import { TipsProvider } from "@/lib/tips";
+
+const NovaGuardian = dynamic(() => import("@/components/NovaGuardian"), {
+  loading: () => null,
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -50,8 +56,16 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
-          <div className="gradient-bg" />
-          {children}
+          <TipsProvider>
+            <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-purple-600 focus:text-white focus:rounded-lg focus:text-sm focus:font-semibold">
+              Skip to content
+            </a>
+            <div className="gradient-bg" />
+            <main id="main-content">
+              {children}
+            </main>
+            <NovaGuardian />
+          </TipsProvider>
         </ThemeProvider>
       </body>
     </html>

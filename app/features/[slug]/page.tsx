@@ -244,10 +244,7 @@ export default function FeaturePage({
         <div className="max-w-7xl mx-auto">
           <div
             className="glass-card px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex items-center justify-between"
-            style={{
-              background: "rgba(15, 16, 22, 0.85)",
-              backdropFilter: "blur(20px)",
-            }}
+            style={{ background: 'var(--bg-card)' }}
           >
             <Link
               href="/"
@@ -277,8 +274,8 @@ export default function FeaturePage({
       {/* Hero */}
       <section className="pt-28 sm:pt-36 md:pt-44 pb-12 sm:pb-20 px-4 sm:px-6 relative overflow-hidden">
         <div
-          className="absolute top-1/4 -left-20 w-48 sm:w-72 md:w-96 h-48 sm:h-72 md:h-96 rounded-full blur-[100px] pointer-events-none opacity-60"
-          style={{ backgroundColor: feature.glowColor }}
+          className="absolute top-1/4 -left-20 w-48 sm:w-72 md:w-96 h-48 sm:h-72 md:h-96 rounded-full pointer-events-none opacity-30"
+          style={{ background: `radial-gradient(circle, ${feature.glowColor}, transparent 70%)` }}
         />
 
         <div className="max-w-4xl mx-auto relative z-10">
