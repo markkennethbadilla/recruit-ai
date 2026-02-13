@@ -791,33 +791,33 @@ export default function PipelinePage() {
           <div className={pipelineTips.length > 0 ? "flex-1 min-w-0" : ""}>
         {/* Progress steps */}
         <div className="flex justify-center mb-4 sm:mb-6">
-          <div className="flex items-center bg-[var(--glass)] p-1 sm:p-2.5 rounded-full border border-[var(--glass-border)] backdrop-blur-md overflow-x-auto max-w-full">
+          <div className="flex items-center bg-[var(--glass)] p-1 sm:p-2.5 rounded-full border border-[var(--glass-border)] backdrop-blur-md overflow-hidden max-w-full">
             {steps.map((s, i) => {
               const isActive = i === currentStepIndex;
               const isDone = i < currentStepIndex;
               const isReachable = i <= highestReached && i !== currentStepIndex;
               const isLight = theme === "light";
               return (
-                <div key={s.id} className="flex items-center">
+                <div key={s.id} className="flex items-center min-w-0 flex-shrink">
                   <motion.div
                     animate={{
                       backgroundColor: isActive ? "rgba(139, 92, 246, 0.2)" : isDone ? "rgba(16, 185, 129, 0.2)" : (i <= highestReached && i > currentStepIndex) ? "rgba(139, 92, 246, 0.08)" : "transparent",
                       color: isActive ? (isLight ? "#7c3aed" : "#d8b4fe") : isDone ? (isLight ? "#059669" : "#6ee7b7") : (i <= highestReached && i > currentStepIndex) ? (isLight ? "#7c3aed" : "#a78bfa") : (isLight ? "#475569" : "#64748b"),
                     }}
                     className={cn(
-                      "flex items-center gap-1 sm:gap-2.5 px-2 sm:px-6 py-1.5 sm:py-3 rounded-full text-[10px] sm:text-sm font-medium transition-all duration-300",
+                      "flex items-center gap-1 sm:gap-2.5 px-2 sm:px-6 py-1.5 sm:py-3 rounded-full text-[10px] sm:text-sm font-medium transition-all duration-300 min-w-0 flex-shrink",
                       isReachable && "cursor-pointer hover:scale-105 hover:brightness-125"
                     )}
                     onClick={() => isReachable && navigateToStep(i)}
                     title={isReachable ? `Go to ${s.label}` : undefined}
                   >
-                    <s.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    <span className={cn("transition-opacity", isActive ? "opacity-100" : "opacity-60 hidden md:inline")}>
+                    <s.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                    <span className={cn("transition-opacity truncate", isActive ? "opacity-100" : "opacity-60 hidden md:inline")}>
                       {s.label}
                     </span>
                   </motion.div>
                   {i < steps.length - 1 && (
-                    <div className="w-2 sm:w-8 h-px bg-[var(--glass-border)] mx-0 sm:mx-1" />
+                    <div className="w-2 sm:w-8 h-px bg-[var(--glass-border)] mx-0 sm:mx-1 flex-shrink" />
                   )}
                 </div>
               );
