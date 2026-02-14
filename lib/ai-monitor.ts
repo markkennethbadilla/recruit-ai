@@ -83,7 +83,7 @@ export function getHealthStatus() {
     version: "2.0.0",
     ai: getAIMetrics(),
     n8n: {
-      url: process.env.N8N_URL || process.env.NEXT_PUBLIC_N8N_URL || "http://localhost:5678",
+      url: process.env.N8N_URL || process.env.NEXT_PUBLIC_N8N_URL || "https://n8n.elunari.uk",
       configured: true,
     },
   };

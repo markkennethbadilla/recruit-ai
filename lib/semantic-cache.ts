@@ -30,7 +30,7 @@ export const CACHED_RESPONSES: CachedQA[] = [
   {
     keywords: ["free", "cost", "pricing", "pay", "money", "charge"],
     question: "Is TalentFlow free?",
-    answer: "TalentFlow uses **free-tier models** from OpenRouter by default (Gemma, LLaMA, DeepSeek, Qwen, etc.). The only paid fallback is GPT-4o-mini at $0.15/1M tokens. ElevenLabs gives 10,000 free characters/month for voice. AirTable and n8n Community are also free.",
+    answer: "TalentFlow uses **free-tier models** from OpenRouter by default (Gemma, LLaMA, DeepSeek, Qwen, etc.). The only paid fallback is GPT-4o-mini at $0.15/1M tokens. ElevenLabs gives 10,000 free characters/month for voice. NocoDB and n8n Community are also free and self-hosted.",
     category: "Getting Started",
   },
 
@@ -76,13 +76,13 @@ export const CACHED_RESPONSES: CachedQA[] = [
   {
     keywords: ["n8n", "workflow", "automation", "orchestration"],
     question: "What does n8n do in TalentFlow?",
-    answer: "n8n is the orchestration layer with 5 workflows:\n- **WF1 Candidate Intake**: Routes candidates by score to appropriate actions\n- **WF2 Smart Outreach**: Generates personalized emails + voice messages\n- **WF3 Data Sync**: Pushes records to AirTable CRM\n- **WF4 Health Monitor**: Checks system health every 5 minutes\n- **WF5 Pipeline Report**: Generates weekly analytics\n\nAccess the dashboard at localhost:5678.",
+    answer: "n8n is the orchestration layer with 5 workflows:\n- **WF1 Candidate Intake**: Routes candidates by score to appropriate actions\n- **WF2 Smart Outreach**: Generates personalized emails + voice messages\n- **WF3 Data Sync**: Pushes records to NocoDB CRM\n- **WF4 Health Monitor**: Checks system health every 5 minutes\n- **WF5 Pipeline Report**: Generates weekly analytics\n\nAccess the dashboard at n8n.elunari.uk.",
     category: "Integrations",
   },
   {
-    keywords: ["airtable", "crm", "database", "records", "sync"],
-    question: "How does AirTable integration work?",
-    answer: "After scoring, TalentFlow pushes a flat record to AirTable containing: candidate name, email, skills, experience summary, overall score, recommendation, and processing date. The record lands in the 'Candidates' table with proper field typing via `typecast`. View your base at airtable.com.",
+    keywords: ["nocodb", "crm", "database", "records", "sync", "airtable"],
+    question: "How does NocoDB integration work?",
+    answer: "After scoring, TalentFlow pushes a flat record to NocoDB containing: candidate name, email, skills, experience summary, overall score, recommendation, and processing date. The record lands in the 'Candidates' table via the NocoDB REST API v2. View your data at db.elunari.uk.",
     category: "Integrations",
   },
   {
@@ -102,13 +102,13 @@ export const CACHED_RESPONSES: CachedQA[] = [
   {
     keywords: ["architecture", "diagram", "how built", "tech stack", "stack"],
     question: "What's the tech stack?",
-    answer: "**Frontend**: Next.js 16 (App Router), React 19, Tailwind 4, Framer Motion\n**AI**: OpenRouter (8-model cascade), ElevenLabs (TTS)\n**Orchestration**: n8n (5 workflows, Docker)\n**Data**: AirTable (CRM), localStorage (session)\n**Deployment**: Vercel-ready with edge API routes\n\nSee the Architecture Diagram on the Guide page for a visual overview.",
+    answer: "**Frontend**: Next.js 16 (App Router), React 19, Tailwind 4, Framer Motion\n**AI**: OpenRouter (8-model cascade), ElevenLabs (TTS)\n**Orchestration**: n8n (5 workflows, native Windows)\n**Data**: NocoDB (CRM), localStorage (session)\n**Deployment**: Vercel (frontend), server laptop (n8n + NocoDB via Cloudflare Tunnel)\n\nSee the Architecture Diagram on the Guide page for a visual overview.",
     category: "Architecture",
   },
   {
     keywords: ["api", "routes", "endpoint", "backend"],
     question: "What API routes are available?",
-    answer: "TalentFlow has 12 API routes:\n- `/api/parse-resume` — Extract structured data from resume\n- `/api/score-candidate` — 6-axis scoring\n- `/api/generate-questions` — Tailored screening questions\n- `/api/apply` — Candidate self-service submission\n- `/api/n8n/sync` — Push to AirTable via n8n\n- `/api/n8n/outreach` — Email + voice generation\n- `/api/n8n/status` — Check n8n workflows\n- `/api/n8n/report` — Pipeline analytics\n- `/api/airtable` — Direct AirTable operations\n- `/api/elevenlabs/tts` — Text-to-speech\n- `/api/models/status` — Rate-limited model status\n- `/api/health` — System health check",
+    answer: "TalentFlow has 12 API routes:\n- `/api/parse-resume` — Extract structured data from resume\n- `/api/score-candidate` — 6-axis scoring\n- `/api/generate-questions` — Tailored screening questions\n- `/api/apply` — Candidate self-service submission\n- `/api/n8n/sync` — Push to NocoDB via n8n\n- `/api/n8n/outreach` — Email + voice generation\n- `/api/n8n/status` — Check n8n workflows\n- `/api/n8n/report` — Pipeline analytics\n- `/api/airtable` — Direct NocoDB operations\n- `/api/elevenlabs/tts` — Text-to-speech\n- `/api/models/status` — Rate-limited model status\n- `/api/health` — System health check",
     category: "Architecture",
   },
 
@@ -116,19 +116,19 @@ export const CACHED_RESPONSES: CachedQA[] = [
   {
     keywords: ["error", "fail", "not working", "broken", "issue", "bug"],
     question: "Something isn't working. What should I check?",
-    answer: "1. **Check the Automations page** — all 4 integration cards should show 'Connected'\n2. **Check n8n** at localhost:5678 — all workflows should be Active (green)\n3. **Check rate limits** — free models may be temporarily limited; use 'Auto (Smart)'\n4. **Check .env.local** — ensure all API keys are set\n5. **Check the Health endpoint** at /api/health for detailed diagnostics",
+    answer: "1. **Check the Automations page** — all 4 integration cards should show 'Connected'\n2. **Check n8n** at n8n.elunari.uk — all workflows should be Active (green)\n3. **Check rate limits** — free models may be temporarily limited; use 'Auto (Smart)'\n4. **Check .env.local** — ensure all API keys are set\n5. **Check the Health endpoint** at /api/health for detailed diagnostics",
     category: "Troubleshooting",
   },
   {
     keywords: ["n8n not connecting", "n8n down", "workflow error", "n8n error"],
     question: "n8n is not connecting?",
-    answer: "Ensure Docker is running and n8n is started:\n```\ndocker start n8n\n```\nOr run: `docker run -d --name n8n -p 5678:5678 n8nio/n8n`\n\nCheck the N8N_URL in .env.local matches your setup (usually `http://localhost:5678`). The n8n API key must also be set in N8N_API_KEY.",
+    answer: "n8n runs on the server laptop (native Windows, not Docker). Check that the server is on and cloudflared tunnel is active.\n\nVerify N8N_URL in .env.local is set to `https://n8n.elunari.uk`. The n8n API key must also be set in N8N_API_KEY. If the server laptop is off, start it and the Scheduled Tasks will auto-launch n8n + cloudflared.",
     category: "Troubleshooting",
   },
   {
     keywords: ["apply", "candidate", "form", "submit", "application"],
     question: "How does the candidate apply page work?",
-    answer: "Share `/apply` with candidates. They fill in name, email, phone, position, resume, and optional cover note. On submit, the data goes to:\n1. **AirTable** — creates a new Candidates record\n2. **n8n WF1** — triggers the intake workflow\n\nCandidates see a success confirmation with their reference details.",
+    answer: "Share `/apply` with candidates. They fill in name, email, phone, position, resume, and optional cover note. On submit, the data goes to:\n1. **NocoDB** — creates a new Candidates record\n2. **n8n WF1** — triggers the intake workflow\n\nCandidates see a success confirmation with their reference details.",
     category: "Features",
   },
   {

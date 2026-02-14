@@ -6,7 +6,7 @@
  * All calls are fire-and-forget (non-blocking) so the UI stays fast.
  */
 
-const N8N_URL = process.env.N8N_URL || process.env.NEXT_PUBLIC_N8N_URL || "http://localhost:5678";
+const N8N_URL = process.env.N8N_URL || process.env.NEXT_PUBLIC_N8N_URL || "https://n8n.elunari.uk";
 
 export interface N8nWebhookResult {
   success: boolean;
@@ -74,7 +74,7 @@ export async function generateOutreach(payload: {
 
 /**
  * WF3: Candidate Data Sync
- * Pushes candidate data to external storage (AirTable/CRM-ready format).
+ * Pushes candidate data to external storage (NocoDB/CRM-ready format).
  */
 export async function syncCandidate(payload: {
   candidateName: string;

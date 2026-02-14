@@ -518,7 +518,7 @@ export default function NovaGuardian() {
       return [
         "Diagnose workflows",
         "Explain the architecture",
-        "Check AirTable sync",
+        "Check NocoDB sync",
       ];
     if (pathname.includes("pipeline"))
       return [

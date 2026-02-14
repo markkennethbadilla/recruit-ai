@@ -54,8 +54,8 @@ export const ALL_TIPS: TipDef[] = [
   },
   {
     id: "auto-sync",
-    title: "Data Sync to AirTable",
-    body: "WF3 pushes a flat candidate record to AirTable with recommendation, skills, and fit score. Records appear in your CRM instantly.",
+    title: "Data Sync to NocoDB",
+    body: "WF3 pushes a flat candidate record to NocoDB with recommendation, skills, and fit score. Records appear in your CRM instantly.",
     page: "automations",
     color: "emerald",
   },
@@ -63,7 +63,7 @@ export const ALL_TIPS: TipDef[] = [
   {
     id: "apply-form",
     title: "Candidate Self-Service",
-    body: "Share the /apply link with candidates. Submissions go directly to AirTable and trigger n8n's intake workflow automatically.",
+    body: "Share the /apply link with candidates. Submissions go directly to NocoDB and trigger n8n's intake workflow automatically.",
     page: "apply",
     color: "purple",
   },

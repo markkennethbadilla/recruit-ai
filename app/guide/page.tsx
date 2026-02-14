@@ -51,19 +51,19 @@ const ArchitectureFlow = dynamic(
 const SERVICE_LINKS = [
   {
     name: "n8n Dashboard",
-    url: "http://localhost:5678",
+    url: "https://n8n.elunari.uk",
     icon: Zap,
     color: "from-emerald-500 to-teal-500",
     description: "Workflow orchestration — view, edit, and toggle all 5 workflows",
-    status: "Local Docker",
+    status: "n8n.elunari.uk",
   },
   {
-    name: "AirTable Base",
-    url: "https://airtable.com/app2lpCZhjtXKxFzo",
+    name: "NocoDB",
+    url: "https://db.elunari.uk",
     icon: Database,
     color: "from-blue-500 to-cyan-500",
     description: "CRM database — 'Candidates' table with all synced records",
-    status: "Cloud",
+    status: "db.elunari.uk",
   },
   {
     name: "ElevenLabs",
@@ -118,7 +118,7 @@ Drag-and-drop a PDF or paste text. AI extracts: name, email, phone, skills, expe
 8 tailored questions (Easy/Medium/Hard) targeting the candidate's specific strengths and gaps. Each includes the ideal answer.
 
 **Step 5 — Summary & Integrations**
-Final summary with recommendation. Results are pushed to AirTable (CRM), n8n triggers outreach, and an ElevenLabs voice message is generated.`,
+Final summary with recommendation. Results are pushed to NocoDB (CRM), n8n triggers outreach, and an ElevenLabs voice message is generated.`,
   },
   {
     id: "models",
@@ -158,7 +158,7 @@ Trigger: New candidate scored. Routes by recommendation level. Builds Slack/emai
 Trigger: Manual test or pipeline completion. Generates personalized email + ElevenLabs voice message. Anti-AI writing rules ensure human-sounding output.
 
 **WF3 — Data Sync**
-Trigger: Pipeline completion. Pushes flat candidate record to AirTable with all scores, skills, and recommendation.
+Trigger: Pipeline completion. Pushes flat candidate record to NocoDB with all scores, skills, and recommendation.
 
 **WF4 — Health Monitor**
 Trigger: Cron (every 5 minutes). Checks /api/health endpoint. Alerts on failures.
@@ -167,16 +167,16 @@ Trigger: Cron (every 5 minutes). Checks /api/health endpoint. Alerts on failures
 Trigger: Weekly cron. Aggregates: total processed, top skills, average scores, gap analysis.
 
 ### Accessing n8n
-- Dashboard: [http://localhost:5678](http://localhost:5678)
-- Ensure Docker is running: \`docker start n8n\`
+- Dashboard: [https://n8n.elunari.uk](https://n8n.elunari.uk)
+- n8n runs on the server laptop (native Windows)
 - Workflows can be toggled on/off individually`,
   },
   {
     id: "integrations",
     title: "External Integrations",
     icon: Shield,
-    content: `### AirTable CRM
-- **Base**: Candidates table
+    content: `### NocoDB CRM
+- **Table**: Candidates table
 - **Fields**: Name, Email, Phone, Skills, Experience, Score, Recommendation, Position, Processing Date
 - **Sync**: Automatic via WF3 or /api/n8n/sync
 - **Typecast**: Enabled — auto-creates select options for Recommendation field
@@ -204,11 +204,11 @@ Trigger: Weekly cron. Aggregates: total processed, top skills, average scores, g
 | \`/api/score-candidate\` | POST | 6-axis scoring against job description |
 | \`/api/generate-questions\` | POST | Generate 8 screening questions |
 | \`/api/apply\` | POST | Candidate self-service submission |
-| \`/api/n8n/sync\` | POST | Push record to AirTable via n8n |
+| \`/api/n8n/sync\` | POST | Push record to NocoDB via n8n |
 | \`/api/n8n/outreach\` | POST | Generate email + voice outreach |
 | \`/api/n8n/status\` | GET | Check n8n workflow status |
 | \`/api/n8n/report\` | POST | Generate pipeline report |
-| \`/api/airtable\` | GET/POST | Direct AirTable operations |
+| \`/api/airtable\` | GET/POST | Direct NocoDB operations |
 | \`/api/elevenlabs/tts\` | POST | Text-to-speech generation |
 | \`/api/models/status\` | GET | Check rate-limited models |
 | \`/api/health\` | GET | System health diagnostics |
@@ -259,14 +259,14 @@ Run the evaluation suite from the **[AI Ethics Dashboard](/eval)** page. Each te
 Free models have per-hour caps. Use "Auto (Smart)" to automatically switch. Check /api/models/status for current state.
 
 **n8n not connecting**
-1. Check Docker is running: \`docker ps | grep n8n\`
-2. Start if needed: \`docker start n8n\`
-3. Verify N8N_URL in .env.local matches your setup
+1. Check that the server laptop is powered on
+2. Verify cloudflared tunnel is running
+3. Verify N8N_URL in .env.local is https://n8n.elunari.uk
 
-**AirTable sync failing**
-1. Check AIRTABLE_API_KEY and AIRTABLE_BASE_ID in .env.local
-2. Verify the "Candidates" table exists
-3. Check the Automations page — AirTable card should show "Connected"
+**NocoDB sync failing**
+1. Check NOCODB_URL, NOCODB_API_TOKEN, and NOCODB_TABLE_ID in .env.local
+2. Verify the "Candidates" table exists in NocoDB
+3. Check the Automations page — NocoDB card should show "Connected"
 
 **Voice generation not working**
 1. Check ELEVENLABS_API_KEY in .env.local
@@ -505,7 +505,7 @@ function Chatbot() {
   const suggestedQuestions = [
     "How do I get started?",
     "What does Auto (Smart) do?",
-    "How does AirTable sync work?",
+    "How does NocoDB sync work?",
     "What's the tech stack?",
   ];
 
@@ -841,8 +841,8 @@ export default function GuidePage() {
                   {[
                     { label: "Frontend Pages", color: "bg-purple-500/20 border-purple-500/30 text-purple-400", items: ["Homepage", "Pipeline", "Automations", "Apply", "Guide"] },
                     { label: "API Routes", color: "bg-blue-500/20 border-blue-500/30 text-blue-400", items: ["13 REST endpoints", "POST/GET methods", "Edge-compatible"] },
-                    { label: "n8n Workflows", color: "bg-emerald-500/20 border-emerald-500/30 text-emerald-400", items: ["5 workflows", "Docker-hosted", "Toggle per-workflow"] },
-                    { label: "External Services", color: "bg-amber-500/20 border-amber-500/30 text-amber-400", items: ["OpenRouter (LLM)", "ElevenLabs (Voice)", "AirTable (CRM)"] },
+                    { label: "n8n Workflows", color: "bg-emerald-500/20 border-emerald-500/30 text-emerald-400", items: ["5 workflows", "Server-hosted", "Toggle per-workflow"] },
+                    { label: "External Services", color: "bg-amber-500/20 border-amber-500/30 text-amber-400", items: ["OpenRouter (LLM)", "ElevenLabs (Voice)", "NocoDB (CRM)"] },
                   ].map((legend) => (
                     <div key={legend.label} className={`rounded-xl border p-4 ${legend.color}`}>
                       <h4 className="font-semibold text-sm mb-2">{legend.label}</h4>

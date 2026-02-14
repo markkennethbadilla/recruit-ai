@@ -24,22 +24,23 @@ AI-powered candidate screening pipeline with n8n workflow orchestration. Upload 
 |----------|---------|---------|
 | **WF1: Candidate Intake** | Webhook (POST) | Routes candidates by score, builds Slack/email alerts |
 | **WF2: Smart Outreach** | Webhook (POST) | Generates personalized emails + ElevenLabs voice scripts |
-| **WF3: Data Sync** | Webhook (POST) | Pushes candidate data to AirTable/CRM in flat records |
+| **WF3: Data Sync** | Webhook (POST) | Pushes candidate data to NocoDB/CRM in flat records |
 | **WF4: Health Monitor** | Cron (5 min) | Checks /api/health, evaluates AI metrics, alerts on failure |
 | **WF5: Pipeline Report** | Webhook (POST) | Weekly analytics: top skills, gaps, qualification rates |
 
 ### Architecture
 
 ```
-TalentFlow (Next.js 16)              n8n (Docker)
+TalentFlow (Vercel)                   Server Laptop (native Windows)
 +---------------------------+        +----------------------------+
 | /pipeline                 | -----> | WF1: Candidate Intake      |
 | /api/health               | <----- | WF4: Health Monitor        |
 | /api/n8n/outreach         | -----> | WF2: Smart Outreach        |
 | /api/n8n/sync             | -----> | WF3: Data Sync             |
 | /api/n8n/report           | -----> | WF5: Pipeline Report       |
-| /automations              |        | Dashboard shows all above  |
-+---------------------------+        +----------------------------+
+| /automations              |        | n8n @ n8n.elunari.uk       |
++---------------------------+        | NocoDB @ db.elunari.uk     |
+                                     +----------------------------+
 ```
 
 ## Tech Stack
@@ -48,17 +49,26 @@ TalentFlow (Next.js 16)              n8n (Docker)
 - Framer Motion (animations)
 - OpenRouter (LLM API — Llama 3.3 70B, Gemma 3 27B, Mistral Small 3.1)
 - Tailwind CSS 4
-- n8n (workflow orchestration, Docker)
+- n8n (workflow orchestration, native Windows on server laptop)
+- NocoDB (self-hosted CRM, replaces AirTable)
+- Cloudflare Tunnel (routes n8n.elunari.uk / db.elunari.uk)
 - Vercel (hosting)
 - Cloudflare (DNS)
 
 ## Getting Started
 
-### Quick Start (Local with n8n)
+### Quick Start (Server Setup)
 
 ```powershell
-# One command starts everything: Docker, n8n, and Next.js
-.\start-local.ps1
+# Run on the server laptop to install n8n + NocoDB + cloudflared
+.\server-setup.ps1
+```
+
+### Quick Start (Local Dev)
+
+```powershell
+# Start Next.js dev server (frontend calls remote n8n/NocoDB)
+npm run dev
 ```
 
 ### Manual Setup
@@ -67,11 +77,8 @@ TalentFlow (Next.js 16)              n8n (Docker)
 # 1. Install dependencies
 npm install
 
-# 2. Start n8n via Docker
-docker run -d --name n8n --restart always -p 5678:5678 \
-  -v n8n_data:/home/node/.n8n \
-  -e N8N_PUBLIC_API_DISABLED=false \
-  n8nio/n8n:latest
+# 2. Set up the server laptop (n8n + NocoDB + Cloudflare Tunnel)
+# Copy server-setup.ps1 to the server and run it
 
 # 3. Provision n8n workflows
 node n8n/provision.mjs
@@ -84,9 +91,12 @@ npm run dev
 
 ```env
 OPENROUTER_API_KEY=...          # Required: OpenRouter LLM API key
-N8N_URL=http://localhost:5678   # n8n instance URL
+N8N_URL=https://n8n.elunari.uk  # n8n on server laptop
 N8N_API_KEY=...                 # n8n API key (from Settings > API)
-NEXT_PUBLIC_N8N_URL=http://localhost:5678
+NEXT_PUBLIC_N8N_URL=https://n8n.elunari.uk
+NOCODB_URL=https://db.elunari.uk  # NocoDB on server laptop
+NOCODB_API_TOKEN=...              # NocoDB API token
+NOCODB_TABLE_ID=...               # NocoDB table ID
 ```
 
 Open [http://localhost:3003](http://localhost:3003).

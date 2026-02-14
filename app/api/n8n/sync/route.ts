@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       candidateId: body.candidateId,
     }).catch(() => ({ success: false, error: "n8n unreachable" }));
 
-    // Push to real AirTable
+    // Push to NocoDB
     const airtablePromise = pushToAirTable({
       name: body.name || body.candidateName || "Unknown",
       email: body.email || body.candidateEmail || "",
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       jobTitle: body.jobTitle || "",
       model: body.model || "",
       processedAt: body.processedAt || new Date().toISOString(),
-    }).catch(() => ({ success: false, error: "AirTable unreachable" }));
+    }).catch(() => ({ success: false, error: "NocoDB unreachable" }));
 
     const [n8nResult, airtableResult] = await Promise.all([n8nPromise, airtablePromise]);
 
@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
       n8n: { connected: n8nResult.success },
       airtable: airtableResult,
       message: airtableResult.success
-        ? `Synced to AirTable (record: ${"recordId" in airtableResult ? airtableResult.recordId : "n/a"})`
-        : `AirTable: ${airtableResult.error || "failed"}`,
+        ? `Synced to NocoDB (record: ${"recordId" in airtableResult ? airtableResult.recordId : "n/a"})`
+        : `NocoDB: ${airtableResult.error || "failed"}`,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Sync failed";
