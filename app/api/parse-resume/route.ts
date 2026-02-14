@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
 
     // Extract text from file
     let text = "";
+    let pdfMailtoEmails: string[] = [];
     const buffer = Buffer.from(await file.arrayBuffer());
 
     if (file.name.endsWith(".pdf")) {
@@ -22,6 +23,24 @@ export async function POST(request: NextRequest) {
       const pdfParse = (await import("pdf-parse/lib/pdf-parse.js")).default;
       const data = await pdfParse(buffer);
       text = data.text;
+
+      // Extract mailto links from PDF annotations (many resumes use clickable "Email" links)
+      try {
+        const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
+        const doc = await getDocument({ data: new Uint8Array(buffer) }).promise;
+        for (let i = 1; i <= doc.numPages; i++) {
+          const page = await doc.getPage(i);
+          const annots = await page.getAnnotations();
+          for (const annot of annots) {
+            if (annot.url && typeof annot.url === "string" && annot.url.startsWith("mailto:")) {
+              pdfMailtoEmails.push(annot.url.replace("mailto:", "").trim());
+            }
+          }
+        }
+      } catch (e) {
+        // Annotation extraction is best-effort; don't fail the parse
+        console.warn("[Parse] PDF annotation extraction failed:", e instanceof Error ? e.message : e);
+      }
     } else if (file.name.endsWith(".txt")) {
       text = buffer.toString("utf-8");
     } else {
@@ -94,14 +113,20 @@ If a field is not found in the resume, use empty string or empty array. For the 
 
     // Regex fallback: if LLM didn't extract an email, scan raw text directly
     if (!parsed.email) {
-      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-      const matches = text.match(emailRegex);
-      if (matches && matches.length > 0) {
-        // Filter out common non-personal emails
-        const personal = matches.find(
-          (e) => !/^(info|support|contact|admin|noreply|no-reply|hello|help)@/i.test(e)
-        );
-        parsed.email = personal || matches[0];
+      // Priority 1: mailto links from PDF annotations (most reliable)
+      if (pdfMailtoEmails.length > 0) {
+        parsed.email = pdfMailtoEmails[0];
+      } else {
+        // Priority 2: regex scan of raw text
+        const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+        const matches = text.match(emailRegex);
+        if (matches && matches.length > 0) {
+          // Filter out common non-personal emails
+          const personal = matches.find(
+            (e) => !/^(info|support|contact|admin|noreply|no-reply|hello|help)@/i.test(e)
+          );
+          parsed.email = personal || matches[0];
+        }
       }
     }
 
