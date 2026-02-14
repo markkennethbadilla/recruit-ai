@@ -78,7 +78,7 @@ function makeNodes(layout: LayoutMode, styles: ReturnType<typeof getStyles>): No
       { id: "wf3", position: { x: col2, y: row(2) }, data: { label: nodeLabel("WF3 Data Sync", "NocoDB push \u2022 Tracker") }, type: "default", style: workflowStyle },
       { id: "wf4", position: { x: col2, y: row(3) }, data: { label: nodeLabel("WF4 Health Monitor", "Cron every 5 min") }, type: "default", style: workflowStyle },
       { id: "wf5", position: { x: col2, y: row(4) }, data: { label: nodeLabel("WF5 Pipeline Report", "Weekly analytics") }, type: "default", style: workflowStyle },
-      { id: "el", position: { x: col3, y: row(0) }, data: { label: nodeLabel("\uD83D\uDD0A ElevenLabs", "Voice AI (TTS)") }, type: "default", style: externalStyle },
+      { id: "el", position: { x: col3, y: row(0) }, data: { label: nodeLabel("\uD83D\uDD0A Kokoro TTS", "Voice AI (Self-Hosted)") }, type: "default", style: externalStyle },
       { id: "air", position: { x: col3, y: row(1) }, data: { label: nodeLabel("\uD83D\uDDC2\uFE0F NocoDB", "Candidate CRM") }, type: "default", style: externalStyle },
       { id: "or", position: { x: col3, y: row(2) }, data: { label: nodeLabel("🧠 OpenRouter", "Llama 3.3 + GPT-4o fallback") }, type: "default", style: externalStyle },
     ];
@@ -91,8 +91,8 @@ function makeNodes(layout: LayoutMode, styles: ReturnType<typeof getStyles>): No
     { id: "pipeline", position: { x: col1, y: row(0) }, data: { label: nodeLabel("📄 /pipeline", "Upload → Parse → Score → Questions") }, type: "default", style: { ...frontendStyle, width: 230 } },
     { id: "health", position: { x: col1, y: row(1) }, data: { label: nodeLabel("🩺 /api/health", "Uptime • AI metrics • Error rates") }, type: "default", style: { ...frontendStyle, width: 230 } },
     { id: "automations", position: { x: col1, y: row(2) }, data: { label: nodeLabel("⚙️ /automations", "Dashboard • Test workflows • Audio") }, type: "default", style: { ...frontendStyle, width: 230 } },
-    { id: "api", position: { x: col1, y: row(3) }, data: { label: nodeLabel("🔌 API Layer", "/api/n8n • elevenlabs • nocodb") }, type: "default", style: { ...frontendStyle, width: 230 } },
-    { id: "el", position: { x: col1, y: row(4) }, data: { label: nodeLabel("🔊 ElevenLabs", "Voice AI (TTS)") }, type: "default", style: { ...externalStyle, width: 230 } },
+    { id: "api", position: { x: col1, y: row(3) }, data: { label: nodeLabel("🔌 API Layer", "/api/n8n • tts • nocodb") }, type: "default", style: { ...frontendStyle, width: 230 } },
+    { id: "el", position: { x: col1, y: row(4) }, data: { label: nodeLabel("🔊 Kokoro TTS", "Voice AI (Self-Hosted)") }, type: "default", style: { ...externalStyle, width: 230 } },
     { id: "air", position: { x: col1, y: row(5) }, data: { label: nodeLabel("🗂️ NocoDB", "Candidate CRM") }, type: "default", style: { ...externalStyle, width: 230 } },
     { id: "or", position: { x: col1, y: row(6) }, data: { label: nodeLabel("🧠 OpenRouter", "Llama 3.3 + GPT-4o fallback") }, type: "default", style: { ...externalStyle, width: 230 } },
     { id: "wf1", position: { x: col2, y: row(0) }, data: { label: nodeLabel("WF1 Candidate Intake", "Route by score • Alerts") }, type: "default", style: { ...workflowStyle, width: 230 } },
@@ -171,7 +171,7 @@ function MobileArchitecture({ isDark }: { isDark: boolean }) {
           <MobileCard title="📄 /pipeline" subtitle="Upload → Parse → Score → Questions" variant="frontend" isDark={isDark} />
           <MobileCard title="🩺 /api/health" subtitle="Uptime • AI metrics • Error rates" variant="frontend" isDark={isDark} />
           <MobileCard title="⚙️ /automations" subtitle="Dashboard • Test workflows • Audio" variant="frontend" isDark={isDark} />
-          <MobileCard title="🔌 API Layer" subtitle="/api/n8n • elevenlabs • nocodb" variant="frontend" isDark={isDark} />
+          <MobileCard title="🔌 API Layer" subtitle="/api/n8n • tts • nocodb" variant="frontend" isDark={isDark} />
         </div>
       </div>
       {arrow}
@@ -189,7 +189,7 @@ function MobileArchitecture({ isDark }: { isDark: boolean }) {
       <div>
         {sectionTitle("External Services")}
         <div className="grid grid-cols-1 gap-2">
-          <MobileCard title="🔊 ElevenLabs" subtitle="Voice AI (TTS)" variant="external" isDark={isDark} />
+          <MobileCard title="🔊 Kokoro TTS" subtitle="Voice AI (Self-Hosted)" variant="external" isDark={isDark} />
           <MobileCard title="🗂️ NocoDB" subtitle="Candidate CRM" variant="external" isDark={isDark} />
           <MobileCard title="🧠 OpenRouter" subtitle="Llama 3.3 + GPT-4o fallback" variant="external" isDark={isDark} />
         </div>

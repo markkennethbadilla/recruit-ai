@@ -193,7 +193,7 @@ function LoadingState({ message }: { message: string }) {
 interface IntegrationResults {
   airtable: { success: boolean; recordId?: string; error?: string } | null;
   n8n: { connected: boolean; outreach?: boolean } | null;
-  elevenlabs: { success: boolean; audioBase64?: string; contentType?: string; characterCount?: number; charsRemaining?: number } | null;
+  kokoro: { success: boolean; audioBase64?: string; contentType?: string; characterCount?: number; charsRemaining?: number } | null;
   voiceScript?: string;
   emailPrompt?: string;
   tone?: string;
@@ -469,7 +469,7 @@ export default function PipelinePage() {
       });
       refreshHistory();
 
-      // Fire n8n + NocoDB + ElevenLabs integrations (AWAIT results for demo visibility)
+      // Fire n8n + NocoDB + Kokoro integrations (AWAIT results for demo visibility)
       setAutoPilotStatus("Syncing to NocoDB + generating voice outreach...");
       const candidatePayload = {
         name: parsed.name,
@@ -493,7 +493,7 @@ export default function PipelinePage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(candidatePayload),
         }).then(r => r.json()).catch(() => ({ success: false, error: "Sync failed" })),
-        // WF2 + ElevenLabs: Generate outreach + voice
+        // WF2 + Kokoro: Generate outreach + voice
         fetch("/api/n8n/outreach", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -516,13 +516,13 @@ export default function PipelinePage() {
       const results: IntegrationResults = {
         airtable: syncData ? { success: syncData.airtable?.success || false, recordId: syncData.airtable?.recordId, error: syncData.airtable?.error } : null,
         n8n: { connected: (syncData?.n8n?.connected || false) || (outreachData?.n8nConnected || false), outreach: outreachData?.success || false },
-        elevenlabs: outreachData?.voiceAudio ? {
+        kokoro: outreachData?.voiceAudio ? {
           success: true,
           audioBase64: outreachData.voiceAudio.base64,
           contentType: outreachData.voiceAudio.contentType,
           characterCount: outreachData.voiceAudio.characterCount,
-          charsRemaining: outreachData.elevenLabsUsage?.remaining,
-        } : { success: outreachData?.elevenLabsConnected || false },
+          charsRemaining: outreachData.kokoroUsage?.remaining,
+        } : { success: outreachData?.kokoroConnected || false },
         voiceScript: outreachData?.voiceScript,
         emailPrompt: outreachData?.emailPrompt,
         tone: outreachData?.tone,
@@ -1701,26 +1701,26 @@ export default function PipelinePage() {
                         )}
                       </div>
 
-                      {/* ElevenLabs Status */}
+                      {/* Kokoro TTS Status */}
                       <div className={cn(
                         "glass-card p-4 border-l-2",
-                        integrationResults.elevenlabs?.success ? "border-l-cyan-500" : "border-l-gray-500"
+                        integrationResults.kokoro?.success ? "border-l-cyan-500" : "border-l-gray-500"
                       )}>
                         <div className="flex items-center gap-2 mb-2">
                           <Mic className="w-4 h-4 text-cyan-400" />
-                          <span className="text-sm font-semibold text-[var(--text-primary)]">ElevenLabs Voice AI</span>
+                          <span className="text-sm font-semibold text-[var(--text-primary)]">Kokoro Voice AI</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          {integrationResults.elevenlabs?.audioBase64 ? (
+                          {integrationResults.kokoro?.audioBase64 ? (
                             <><CheckCircle2 className="w-3 h-3 text-green-400" /><span className="text-xs text-green-400">Audio Generated</span></>
-                          ) : integrationResults.elevenlabs?.success ? (
+                          ) : integrationResults.kokoro?.success ? (
                             <><CheckCircle2 className="w-3 h-3 text-green-400" /><span className="text-xs text-green-400">Connected</span></>
                           ) : (
                             <><AlertCircle className="w-3 h-3 text-gray-500" /><span className="text-xs text-gray-400">Unavailable</span></>
                           )}
                         </div>
-                        {integrationResults.elevenlabs?.characterCount && (
-                          <p className="text-[10px] text-[var(--text-muted)] mt-1">{integrationResults.elevenlabs.characterCount} chars | {integrationResults.elevenlabs.charsRemaining?.toLocaleString()} remaining</p>
+                        {integrationResults.kokoro?.characterCount && (
+                          <p className="text-[10px] text-[var(--text-muted)] mt-1">{integrationResults.kokoro.characterCount} chars | Free (self-hosted)</p>
                         )}
                       </div>
                     </div>
@@ -1756,7 +1756,7 @@ export default function PipelinePage() {
                             <div>
                               <div className="flex items-center gap-1.5 mb-2">
                                 <Volume2 className="w-3 h-3 text-cyan-400" />
-                                <span className="text-xs font-medium text-[var(--text-muted)]">Voice Script (ElevenLabs)</span>
+                                <span className="text-xs font-medium text-[var(--text-muted)]">Voice Script (Kokoro)</span>
                                 {audioUrl && (
                                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Audio Ready</span>
                                 )}

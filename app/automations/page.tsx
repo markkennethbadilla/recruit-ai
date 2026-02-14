@@ -87,8 +87,8 @@ interface OutreachResult {
     characterCount: number;
   } | null;
   n8nConnected?: boolean;
-  elevenLabsConnected?: boolean;
-  elevenLabsUsage?: {
+  kokoroConnected?: boolean;
+  kokoroUsage?: {
     used: number;
     limit: number;
     remaining: number;
@@ -106,7 +106,7 @@ interface SyncResult {
   error?: string;
 }
 
-interface ElevenLabsStatus {
+interface KokoroStatus {
   success: boolean;
   connected: boolean;
   usage?: {
@@ -139,7 +139,7 @@ const WORKFLOW_META: Record<string, { description: string; icon: typeof Zap; col
     bg: "bg-purple-500/10",
   },
   "WF2: Smart Outreach Generator": {
-    description: "Generates personalized recruiting emails + ElevenLabs voice scripts based on candidate profile",
+    description: "Generates personalized recruiting emails + Kokoro voice scripts based on candidate profile",
     icon: Send,
     color: "text-blue-400",
     bg: "bg-blue-500/10",
@@ -170,7 +170,7 @@ export default function AutomationsPage() {
   const autoTips = usePageTips("automations");
   const [n8nStatus, setN8nStatus] = useState<N8nStatus | null>(null);
   const [health, setHealth] = useState<HealthData | null>(null);
-  const [elevenLabsStatus, setElevenLabsStatus] = useState<ElevenLabsStatus | null>(null);
+  const [kokoroStatus, setKokoroStatus] = useState<KokoroStatus | null>(null);
   const [airTableStatus, setAirTableStatus] = useState<AirTableStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [testingWorkflow, setTestingWorkflow] = useState<string | null>(null);
@@ -193,7 +193,7 @@ export default function AutomationsPage() {
       const healthData = await healthRes.json();
       setN8nStatus(n8nData);
       setHealth(healthData);
-      if (elevenRes) setElevenLabsStatus(await elevenRes.json());
+      if (elevenRes) setKokoroStatus(await elevenRes.json());
       if (airtableRes) setAirTableStatus(await airtableRes.json());
     } catch {
       setN8nStatus({ connected: false, workflows: [], error: "Failed to fetch status" });
@@ -461,7 +461,7 @@ export default function AutomationsPage() {
             )}
           </motion.div>
 
-          {/* ElevenLabs Voice AI */}
+          {/* Kokoro Voice AI */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -469,8 +469,8 @@ export default function AutomationsPage() {
             className={cn("rounded-xl border p-4", isDark ? "bg-white/[0.02] border-white/5" : "bg-white border-gray-200")}
           >
             <div className="flex items-center justify-between mb-2">
-              <h2 className={cn("text-base font-semibold", isDark ? "text-white" : "text-gray-900")}>ElevenLabs</h2>
-              {elevenLabsStatus?.connected ? (
+              <h2 className={cn("text-base font-semibold", isDark ? "text-white" : "text-gray-900")}>Kokoro TTS</h2>
+              {kokoroStatus?.connected ? (
                 <div className="flex items-center gap-2 text-emerald-400">
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <span className="text-sm font-medium">Connected</span>
@@ -482,42 +482,33 @@ export default function AutomationsPage() {
                 </div>
               )}
             </div>
-            {elevenLabsStatus?.connected && elevenLabsStatus.usage ? (
+            {kokoroStatus?.connected && kokoroStatus.usage ? (
               <div className="space-y-1">
                 <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
-                  <span>Characters Used</span>
-                  <span className="font-mono">{elevenLabsStatus.usage.characters_used.toLocaleString()}</span>
-                </div>
-                <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
-                  <span>Remaining</span>
-                  <span className="font-mono text-emerald-400">{elevenLabsStatus.usage.characters_remaining.toLocaleString()}</span>
-                </div>
-                <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
                   <span>Voices Available</span>
-                  <span className="font-mono text-purple-400">{elevenLabsStatus.voices?.length || 0}</span>
+                  <span className="font-mono text-purple-400">{kokoroStatus.voices?.length || 0}</span>
                 </div>
-                {/* Character usage bar */}
-                <div className="mt-2">
-                  <div className={cn("w-full h-2 rounded-full", isDark ? "bg-white/5" : "bg-gray-200")}>
-                    <div
-                      className="h-2 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"
-                      style={{ width: `${Math.min(100, (elevenLabsStatus.usage.characters_used / elevenLabsStatus.usage.characters_limit) * 100)}%` }}
-                    />
-                  </div>
+                <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
+                  <span>Model</span>
+                  <span className="font-mono text-cyan-400">Kokoro-82M</span>
+                </div>
+                <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
+                  <span>Cost</span>
+                  <span className="font-mono text-emerald-400">Free (self-hosted)</span>
                 </div>
               </div>
             ) : (
               <div className="space-y-1">
                 <p className={cn("text-xs leading-relaxed", isDark ? "text-gray-500" : "text-gray-400")}>
-                  ElevenLabs API is not reachable. Voice generation in WF2 will be skipped.
+                  Kokoro TTS is not reachable. Voice generation in WF2 will be skipped.
                 </p>
                 <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
                   <span>Service</span>
-                  <span className="font-mono">Voice AI (TTS)</span>
+                  <span className="font-mono">Kokoro-82M (T480 Server)</span>
                 </div>
                 <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
                   <span>Status</span>
-                  <span className="font-mono text-amber-400">Check API key / network</span>
+                  <span className="font-mono text-amber-400">Check tts.elunari.uk</span>
                 </div>
               </div>
             )}
@@ -752,7 +743,7 @@ export default function AutomationsPage() {
             >
               <h3 className={cn("text-lg font-semibold mb-4 flex items-center gap-2", isDark ? "text-white" : "text-gray-900")}>
                 <Send className="w-5 h-5 text-blue-400" /> Generated Outreach Content
-                {outreachResult.elevenLabsConnected && (
+                {outreachResult.kokoroConnected && (
                   <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-500/10 text-emerald-400">Voice AI Active</span>
                 )}
               </h3>
@@ -772,7 +763,7 @@ export default function AutomationsPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Mic className="w-4 h-4 text-cyan-400" />
-                    <span className={cn("font-medium text-sm", isDark ? "text-gray-300" : "text-gray-700")}>Voice Script (ElevenLabs)</span>
+                    <span className={cn("font-medium text-sm", isDark ? "text-gray-300" : "text-gray-700")}>Voice Script (Kokoro)</span>
                     {outreachResult.voiceAudio && (
                       <span className="px-2 py-0.5 rounded-full text-xs bg-cyan-500/10 text-cyan-400">Audio Ready</span>
                     )}
@@ -807,8 +798,8 @@ export default function AutomationsPage() {
                       )}
                       <p className={cn("text-xs", isDark ? "text-gray-500" : "text-gray-400")}>
                         {outreachResult.voiceAudio.characterCount} characters | {outreachResult.voiceAudio.contentType}
-                        {outreachResult.elevenLabsUsage && (
-                          <> | {outreachResult.elevenLabsUsage.remaining.toLocaleString()} chars remaining</>
+                        {outreachResult.kokoroUsage && (
+                          <> | {outreachResult.kokoroUsage.remaining.toLocaleString()} chars remaining</>
                         )}
                       </p>
                     </div>

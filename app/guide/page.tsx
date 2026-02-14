@@ -66,12 +66,12 @@ const SERVICE_LINKS = [
     status: "db.elunari.uk",
   },
   {
-    name: "ElevenLabs",
-    url: "https://elevenlabs.io/app/speech-synthesis",
+    name: "Kokoro TTS",
+    url: "https://tts.elunari.uk/health",
     icon: Mic,
     color: "from-purple-500 to-pink-500",
-    description: "Voice AI — Rachel voice for personalized outreach messages",
-    status: "Cloud",
+    description: "Voice AI — Kokoro-82M self-hosted TTS for outreach messages",
+    status: "tts.elunari.uk",
   },
   {
     name: "OpenRouter",
@@ -118,7 +118,7 @@ Drag-and-drop a PDF or paste text. AI extracts: name, email, phone, skills, expe
 8 tailored questions (Easy/Medium/Hard) targeting the candidate's specific strengths and gaps. Each includes the ideal answer.
 
 **Step 5 — Summary & Integrations**
-Final summary with recommendation. Results are pushed to NocoDB (CRM), n8n triggers outreach, and an ElevenLabs voice message is generated.`,
+Final summary with recommendation. Results are pushed to NocoDB (CRM), n8n triggers outreach, and a Kokoro voice message is generated.`,
   },
   {
     id: "models",
@@ -155,7 +155,7 @@ Rate limits refresh automatically after 5 minutes. The status indicator in the p
 Trigger: New candidate scored. Routes by recommendation level. Builds Slack/email notifications.
 
 **WF2 — Smart Outreach**  
-Trigger: Manual test or pipeline completion. Generates personalized email + ElevenLabs voice message. Anti-AI writing rules ensure human-sounding output.
+Trigger: Manual test or pipeline completion. Generates personalized email + Kokoro voice message. Anti-AI writing rules ensure human-sounding output.
 
 **WF3 — Data Sync**
 Trigger: Pipeline completion. Pushes flat candidate record to NocoDB with all scores, skills, and recommendation.
@@ -181,10 +181,11 @@ Trigger: Weekly cron. Aggregates: total processed, top skills, average scores, g
 - **Sync**: Automatic via WF3 or /api/n8n/sync
 - **Typecast**: Enabled — auto-creates select options for Recommendation field
 
-### ElevenLabs Voice AI
-- **Voice**: Rachel (ID: 21m00Tcm4TlvDq8ikWAM)
-- **Model**: eleven_multilingual_v2
-- **Free tier**: 10,000 characters/month
+### Kokoro Voice AI (Self-Hosted)
+- **Model**: Kokoro-82M
+- **Voice**: af_heart (warm, professional female)
+- **Server**: T480 via Cloudflare Tunnel (tts.elunari.uk)
+- **Cost**: Free (self-hosted, unlimited)
 - **Script**: Anti-AI optimized — natural cadence, no buzzwords, varied sentence lengths
 
 ### OpenRouter LLM Gateway
@@ -209,7 +210,7 @@ Trigger: Weekly cron. Aggregates: total processed, top skills, average scores, g
 | \`/api/n8n/status\` | GET | Check n8n workflow status |
 | \`/api/n8n/report\` | POST | Generate pipeline report |
 | \`/api/airtable\` | GET/POST | Direct NocoDB operations |
-| \`/api/elevenlabs/tts\` | POST | Text-to-speech generation |
+| \`/api/elevenlabs/tts\` | POST | Text-to-speech generation (Kokoro) |
 | \`/api/models/status\` | GET | Check rate-limited models |
 | \`/api/health\` | GET | System health diagnostics |
 | \`/api/guide/chat\` | POST | Guide chatbot (semantic cache + LLM) |
@@ -269,8 +270,8 @@ Free models have per-hour caps. Use "Auto (Smart)" to automatically switch. Chec
 3. Check the Automations page — NocoDB card should show "Connected"
 
 **Voice generation not working**
-1. Check ELEVENLABS_API_KEY in .env.local
-2. Check character usage (10K/month free limit)
+1. Check tts.elunari.uk/health is accessible
+2. Verify Kokoro container is running on T480 server
 3. Test from the Automations page using WF2
 
 **Pipeline taking too long**
@@ -842,7 +843,7 @@ export default function GuidePage() {
                     { label: "Frontend Pages", color: "bg-purple-500/20 border-purple-500/30 text-purple-400", items: ["Homepage", "Pipeline", "Automations", "Apply", "Guide"] },
                     { label: "API Routes", color: "bg-blue-500/20 border-blue-500/30 text-blue-400", items: ["13 REST endpoints", "POST/GET methods", "Edge-compatible"] },
                     { label: "n8n Workflows", color: "bg-emerald-500/20 border-emerald-500/30 text-emerald-400", items: ["5 workflows", "Server-hosted", "Toggle per-workflow"] },
-                    { label: "External Services", color: "bg-amber-500/20 border-amber-500/30 text-amber-400", items: ["OpenRouter (LLM)", "ElevenLabs (Voice)", "NocoDB (CRM)"] },
+                    { label: "External Services", color: "bg-amber-500/20 border-amber-500/30 text-amber-400", items: ["OpenRouter (LLM)", "Kokoro (Voice)", "NocoDB (CRM)"] },
                   ].map((legend) => (
                     <div key={legend.label} className={`rounded-xl border p-4 ${legend.color}`}>
                       <h4 className="font-semibold text-sm mb-2">{legend.label}</h4>

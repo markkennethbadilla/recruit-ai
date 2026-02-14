@@ -371,7 +371,7 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[
               { icon: Zap, label: "Candidate Intake", desc: "Auto-routes by score, builds Slack/email alerts", color: "text-purple-400", bg: "bg-purple-500/10" },
-              { icon: Upload, label: "Smart Outreach", desc: "Personalized emails + ElevenLabs voice scripts", color: "text-blue-400", bg: "bg-blue-500/10" },
+              { icon: Upload, label: "Smart Outreach", desc: "Personalized emails + Kokoro voice scripts", color: "text-blue-400", bg: "bg-blue-500/10" },
               { icon: BarChart3, label: "Data Sync", desc: "NocoDB/CRM-ready flat records, auto-pushed", color: "text-cyan-400", bg: "bg-cyan-500/10" },
               { icon: Shield, label: "Health Monitor", desc: "Cron checks every 5 min, alerts on AI failures", color: "text-emerald-400", bg: "bg-emerald-500/10" },
               { icon: Brain, label: "Pipeline Reports", desc: "Weekly analytics: top skills, gaps, rates", color: "text-amber-400", bg: "bg-amber-500/10" },

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateOutreach } from "@/lib/n8n";
-import { generateOutreachAudio, getUsageInfo } from "@/lib/elevenlabs";
+import { generateOutreachAudio, getUsageInfo } from "@/lib/kokoro";
 
 /**
  * Build a human-sounding email prompt for LLM-powered outreach.
@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing candidateName" }, { status: 400 });
     }
 
-    // Fire n8n outreach webhook + ElevenLabs TTS in parallel
-    const [n8nResult, elevenLabsResult] = await Promise.allSettled([
+    // Fire n8n outreach webhook + Kokoro TTS in parallel
+    const [n8nResult, kokoroResult] = await Promise.allSettled([
       generateOutreach({
         candidateName,
         candidateEmail: candidateEmail || "",
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         jobTitle: jobTitle || "Open Position",
         companyName: companyName || "WeAssist",
       }),
-      // Generate real voice audio via ElevenLabs
+      // Generate real voice audio via Kokoro TTS
       generateOutreachAudio(
         candidateName,
         jobTitle || "Open Position",
@@ -74,9 +74,9 @@ export async function POST(request: NextRequest) {
         : { success: false, error: "n8n unreachable" };
 
     const tts =
-      elevenLabsResult.status === "fulfilled"
-        ? elevenLabsResult.value
-        : { success: false, error: "ElevenLabs unreachable", script: "", audioBase64: undefined, contentType: undefined, characterCount: undefined };
+      kokoroResult.status === "fulfilled"
+        ? kokoroResult.value
+        : { success: false, error: "Kokoro TTS unreachable", script: "", audioBase64: undefined, contentType: undefined, characterCount: undefined };
 
     // Get usage info (non-blocking)
     const usage = await getUsageInfo().catch(() => ({
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       emailPrompt: localEmailPrompt, // always use anti-AI compliant prompt
       voiceScript: tts.script || (n8n.success ? (n8n as { data?: { voiceScript?: string } }).data?.voiceScript || "" : ""),
       tone: toneLabel,
-      // ElevenLabs TTS audio
+      // Kokoro TTS audio
       voiceAudio: tts.success
         ? {
             base64: tts.audioBase64,
@@ -113,8 +113,8 @@ export async function POST(request: NextRequest) {
         : null,
       // Integration statuses
       n8nConnected: n8n.success,
-      elevenLabsConnected: tts.success,
-      elevenLabsUsage: {
+      kokoroConnected: tts.success,
+      kokoroUsage: {
         used: usage.character_count,
         limit: usage.character_limit,
         remaining: usage.character_limit - usage.character_count,

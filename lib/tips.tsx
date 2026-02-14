@@ -48,7 +48,7 @@ export const ALL_TIPS: TipDef[] = [
   {
     id: "auto-outreach",
     title: "Smart Outreach",
-    body: "Test WF2 to generate a personalized email + AI voice message using ElevenLabs. The email is written to sound human — no AI-buzzwords, natural cadence.",
+    body: "Test WF2 to generate a personalized email + AI voice message using Kokoro TTS. The email is written to sound human — no AI-buzzwords, natural cadence.",
     page: "automations",
     color: "blue",
   },

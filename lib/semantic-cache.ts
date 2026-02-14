@@ -30,7 +30,7 @@ export const CACHED_RESPONSES: CachedQA[] = [
   {
     keywords: ["free", "cost", "pricing", "pay", "money", "charge"],
     question: "Is TalentFlow free?",
-    answer: "TalentFlow uses **free-tier models** from OpenRouter by default (Gemma, LLaMA, DeepSeek, Qwen, etc.). The only paid fallback is GPT-4o-mini at $0.15/1M tokens. ElevenLabs gives 10,000 free characters/month for voice. NocoDB and n8n Community are also free and self-hosted.",
+    answer: "TalentFlow uses **free-tier models** from OpenRouter by default (Gemma, LLaMA, DeepSeek, Qwen, etc.). The only paid fallback is GPT-4o-mini at $0.15/1M tokens. Voice AI uses Kokoro-82M, self-hosted on the T480 server — completely free with unlimited usage. NocoDB and n8n Community are also free and self-hosted.",
     category: "Getting Started",
   },
 
@@ -86,9 +86,9 @@ export const CACHED_RESPONSES: CachedQA[] = [
     category: "Integrations",
   },
   {
-    keywords: ["elevenlabs", "voice", "audio", "tts", "speech"],
-    question: "How does ElevenLabs voice integration work?",
-    answer: "WF2 (Smart Outreach) generates a personalized voice message using ElevenLabs' Rachel voice. The script is written to sound natural and human — no AI buzzwords, varied sentence lengths, casual linking phrases. Free tier: 10,000 characters/month.",
+    keywords: ["kokoro", "voice", "audio", "tts", "speech", "elevenlabs"],
+    question: "How does Kokoro voice integration work?",
+    answer: "WF2 (Smart Outreach) generates a personalized voice message using Kokoro-82M, a self-hosted TTS model running on the T480 server. The script is written to sound natural and human — no AI buzzwords, varied sentence lengths, casual linking phrases. It's completely free with unlimited usage, accessible at tts.elunari.uk.",
     category: "Integrations",
   },
   {
@@ -102,13 +102,13 @@ export const CACHED_RESPONSES: CachedQA[] = [
   {
     keywords: ["architecture", "diagram", "how built", "tech stack", "stack"],
     question: "What's the tech stack?",
-    answer: "**Frontend**: Next.js 16 (App Router), React 19, Tailwind 4, Framer Motion\n**AI**: OpenRouter (8-model cascade), ElevenLabs (TTS)\n**Orchestration**: n8n (5 workflows, native Windows)\n**Data**: NocoDB (CRM), localStorage (session)\n**Deployment**: Vercel (frontend), server laptop (n8n + NocoDB via Cloudflare Tunnel)\n\nSee the Architecture Diagram on the Guide page for a visual overview.",
+    answer: "**Frontend**: Next.js 16 (App Router), React 19, Tailwind 4, Framer Motion\n**AI**: OpenRouter (8-model cascade), Kokoro-82M (TTS, self-hosted)\n**Orchestration**: n8n (5 workflows)\n**Data**: NocoDB (CRM), localStorage (session)\n**Deployment**: Vercel (frontend), T480 server (n8n + NocoDB + Kokoro via Cloudflare Tunnel)\n\nSee the Architecture Diagram on the Guide page for a visual overview.",
     category: "Architecture",
   },
   {
     keywords: ["api", "routes", "endpoint", "backend"],
     question: "What API routes are available?",
-    answer: "TalentFlow has 12 API routes:\n- `/api/parse-resume` — Extract structured data from resume\n- `/api/score-candidate` — 6-axis scoring\n- `/api/generate-questions` — Tailored screening questions\n- `/api/apply` — Candidate self-service submission\n- `/api/n8n/sync` — Push to NocoDB via n8n\n- `/api/n8n/outreach` — Email + voice generation\n- `/api/n8n/status` — Check n8n workflows\n- `/api/n8n/report` — Pipeline analytics\n- `/api/airtable` — Direct NocoDB operations\n- `/api/elevenlabs/tts` — Text-to-speech\n- `/api/models/status` — Rate-limited model status\n- `/api/health` — System health check",
+    answer: "TalentFlow has 12 API routes:\n- `/api/parse-resume` — Extract structured data from resume\n- `/api/score-candidate` — 6-axis scoring\n- `/api/generate-questions` — Tailored screening questions\n- `/api/apply` — Candidate self-service submission\n- `/api/n8n/sync` — Push to NocoDB via n8n\n- `/api/n8n/outreach` — Email + voice generation\n- `/api/n8n/status` — Check n8n workflows\n- `/api/n8n/report` — Pipeline analytics\n- `/api/airtable` — Direct NocoDB operations\n- `/api/elevenlabs/tts` — Text-to-speech (Kokoro)\n- `/api/models/status` — Rate-limited model status\n- `/api/health` — System health check",
     category: "Architecture",
   },
 

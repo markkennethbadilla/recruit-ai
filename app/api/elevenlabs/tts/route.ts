@@ -4,10 +4,11 @@ import {
   generateOutreachAudio,
   listVoices,
   getUsageInfo,
-} from "@/lib/elevenlabs";
+} from "@/lib/kokoro";
 
 /**
- * GET /api/elevenlabs/tts — Get ElevenLabs status, voices, and usage
+ * GET /api/elevenlabs/tts — Get Kokoro TTS status, voices, and usage
+ * (route path kept for backwards compatibility)
  */
 export async function GET() {
   try {
@@ -33,7 +34,7 @@ export async function GET() {
       {
         success: false,
         error:
-          error instanceof Error ? error.message : "Failed to reach ElevenLabs",
+          error instanceof Error ? error.message : "Failed to reach Kokoro TTS",
       },
       { status: 500 }
     );
@@ -41,7 +42,7 @@ export async function GET() {
 }
 
 /**
- * POST /api/elevenlabs/tts — Generate TTS audio
+ * POST /api/elevenlabs/tts — Generate TTS audio (Kokoro)
  * Body options:
  *   { text: string } — raw text-to-speech
  *   { candidateName, jobTitle, score, recommendation } — outreach voice message
@@ -58,10 +59,9 @@ export async function POST(req: NextRequest) {
         body.score || 0,
         body.recommendation || "Strong candidate",
         {
-          voiceId: body.voiceId,
-          modelId: body.modelId,
-          stability: body.stability,
-          similarityBoost: body.similarityBoost,
+          voice: body.voice || body.voiceId,
+          model: body.model || body.modelId,
+          speed: body.speed,
         }
       );
 
@@ -86,10 +86,9 @@ export async function POST(req: NextRequest) {
     // Raw text-to-speech
     if (body.text) {
       const result = await textToSpeech(body.text, {
-        voiceId: body.voiceId,
-        modelId: body.modelId,
-        stability: body.stability,
-        similarityBoost: body.similarityBoost,
+        voice: body.voice || body.voiceId,
+        model: body.model || body.modelId,
+        speed: body.speed,
       });
 
       if (!result.success) {
@@ -124,7 +123,7 @@ export async function POST(req: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "ElevenLabs TTS generation failed",
+            : "Kokoro TTS generation failed",
       },
       { status: 500 }
     );

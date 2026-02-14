@@ -9,7 +9,7 @@ Key facts about TalentFlow:
 - Uses OpenRouter to access free LLMs (Gemma 3 27B, LLaMA 3.3 70B, DeepSeek R1, Qwen3 32B, Mistral Small, Phi-4, DeepHermes 3) with GPT-4o-mini as paid fallback
 - n8n provides 5 orchestration workflows: Candidate Intake, Smart Outreach, Data Sync, Health Monitor, Pipeline Reports
 - NocoDB serves as the CRM (Candidates table)
-- ElevenLabs provides text-to-speech for personalized voice outreach (Rachel voice)
+- Kokoro-82M provides text-to-speech for personalized voice outreach (self-hosted on T480, free)
 - The pipeline: Upload resume -> AI parses -> 6-axis scoring -> screening questions -> integration results
 - "Auto (Smart)" model selection picks the first non-rate-limited free model
 - Rate-limited models get a 5-minute cooldown, then retry
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       return NextResponse.json({
-        reply: "I can answer common questions about TalentFlow from my built-in knowledge, but the AI backend isn't configured for custom questions right now. Try asking about: pipeline, scoring, n8n, NocoDB, ElevenLabs, models, or troubleshooting.",
+        reply: "I can answer common questions about TalentFlow from my built-in knowledge, but the AI backend isn't configured for custom questions right now. Try asking about: pipeline, scoring, n8n, NocoDB, Kokoro TTS, models, or troubleshooting.",
         source: "fallback",
         confidence: 0,
       });
