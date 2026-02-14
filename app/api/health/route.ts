@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const health = getHealthStatus();
+    const health = await getHealthStatus();
     return NextResponse.json(health);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Health check failed";

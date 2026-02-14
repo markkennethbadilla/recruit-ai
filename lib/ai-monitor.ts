@@ -14,6 +14,26 @@ interface AIMetrics {
   requestLog: { timestamp: string; latencyMs: number; model: string; success: boolean }[];
 }
 
+interface HealthStatus {
+  status: "healthy" | "degraded";
+  uptime: string;
+  uptimeMs: number;
+  timestamp: string;
+  version: string;
+  ai: Omit<AIMetrics, "requestLog"> & { errorRate: string; requestLog?: undefined };
+  n8n: {
+    url: string;
+    configured: boolean;
+    connected: boolean;
+    error?: string;
+  };
+  nocodb: {
+    connected: boolean;
+    recordCount?: number;
+    error?: string;
+  };
+}
+
 const MAX_LOG_ENTRIES = 100;
 
 // In-memory metrics (resets on cold start — fine for demo, use Redis in production)
@@ -71,20 +91,66 @@ export function getAIMetrics() {
   };
 }
 
-export function getHealthStatus() {
+function formatUptime(uptimeMs: number): string {
+  const seconds = Math.floor(uptimeMs / 1000);
+  if (seconds < 60) return `${seconds}s`;
+
+  const minutes = uptimeMs / 60000;
+  if (minutes < 60) return `${minutes.toFixed(1)}m`;
+
+  const hours = uptimeMs / 3600000;
+  if (hours < 24) return `${hours.toFixed(2)}h`;
+
+  const days = uptimeMs / 86400000;
+  return `${days.toFixed(1)}d`;
+}
+
+export async function getHealthStatus(): Promise<HealthStatus> {
+  const [{ checkNocoDBStatus }, { getN8nStatus }] = await Promise.all([
+    import("@/lib/nocodb"),
+    import("@/lib/n8n"),
+  ]);
+
+  const [nocodbStatus, n8nStatus] = await Promise.all([
+    checkNocoDBStatus(),
+    getN8nStatus(),
+  ]);
+
   const uptimeMs = Date.now() - startTime;
-  const uptimeHours = (uptimeMs / 3600000).toFixed(2);
+  const aiMetrics = getAIMetrics();
+  const persistentRequestCount = nocodbStatus.recordCount ?? 0;
+  const totalRequests = Math.max(aiMetrics.totalRequests, persistentRequestCount);
+  const totalErrors = aiMetrics.totalErrors;
+  const errorRate = totalRequests > 0
+    ? `${((totalErrors / totalRequests) * 100).toFixed(1)}%`
+    : "0%";
+
+  const configuredN8nUrl = process.env.N8N_URL || process.env.NEXT_PUBLIC_N8N_URL || "https://n8n.elunari.uk";
+  const n8nConfigured = Boolean(process.env.N8N_API_KEY);
+  const overallStatus: HealthStatus["status"] = n8nStatus.connected ? "healthy" : "degraded";
 
   return {
-    status: "healthy" as const,
-    uptime: `${uptimeHours}h`,
+    status: overallStatus,
+    uptime: formatUptime(uptimeMs),
     uptimeMs,
     timestamp: new Date().toISOString(),
     version: "2.0.0",
-    ai: getAIMetrics(),
+    ai: {
+      ...aiMetrics,
+      totalRequests,
+      totalErrors,
+      errorRate,
+    },
     n8n: {
-      url: process.env.N8N_URL || process.env.NEXT_PUBLIC_N8N_URL || "https://n8n.elunari.uk",
-      configured: true,
+      url: configuredN8nUrl,
+      configured: n8nConfigured,
+      connected: n8nStatus.connected,
+      error: n8nStatus.error,
+    },
+    nocodb: {
+      connected: nocodbStatus.connected,
+      recordCount: nocodbStatus.recordCount,
+      error: nocodbStatus.error,
     },
   };
 }
