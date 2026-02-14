@@ -220,7 +220,6 @@ export default function PipelinePage() {
   const [integrationResults, setIntegrationResults] = useState<IntegrationResults | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [rateLimitedModels, setRateLimitedModels] = useState<string[]>([]);
-  const [candidateEmail, setCandidateEmail] = useState("");
   const { theme, toggleTheme } = useTheme();
   const pipelineTips = usePageTips("pipeline");
 
@@ -499,6 +498,8 @@ export default function PipelinePage() {
       const qData = await qRes.json();
       if (!qRes.ok) throw new Error(qData.error);
       setQuestions(qData.questions);
+      // Move past "generating" so the score view stops showing "Drafting interview guide..."
+      setState((s) => ({ ...s, step: "complete" }));
 
       // Save to history
       saveToHistory({
@@ -545,7 +546,7 @@ export default function PipelinePage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             candidateName: parsed.name || "Unknown",
-            candidateEmail: candidateEmail.trim() || parsed.email || "",
+            candidateEmail: parsed.email || "",
             overallScore: scoringResult.overallScore,
             strengths: scoringResult.strengths || [],
             gaps: scoringResult.gaps || [],
@@ -1003,16 +1004,6 @@ export default function PipelinePage() {
                               <p className="text-sm font-semibold text-[var(--text-primary)]">Auto-Pilot Mode</p>
                               <p className="text-[10px] text-[var(--text-muted)]">Pick a JD template, then run the full pipeline</p>
                             </div>
-                          </div>
-                          {/* Optional candidate email for outreach */}
-                          <div className="relative">
-                            <input
-                              type="email"
-                              placeholder="Candidate email (optional, for outreach)"
-                              value={candidateEmail}
-                              onChange={(e) => setCandidateEmail(e.target.value)}
-                              className="w-full px-3 py-2 text-xs bg-white/5 border border-white/10 rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-purple-500/30 transition-colors"
-                            />
                           </div>
                           <div className="flex gap-2 flex-wrap">
                             {JD_TEMPLATES.slice(0, 3).map((t) => (

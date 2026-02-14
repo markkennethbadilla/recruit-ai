@@ -92,6 +92,19 @@ If a field is not found in the resume, use empty string or empty array. For the 
       }
     }
 
+    // Regex fallback: if LLM didn't extract an email, scan raw text directly
+    if (!parsed.email) {
+      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+      const matches = text.match(emailRegex);
+      if (matches && matches.length > 0) {
+        // Filter out common non-personal emails
+        const personal = matches.find(
+          (e) => !/^(info|support|contact|admin|noreply|no-reply|hello|help)@/i.test(e)
+        );
+        parsed.email = personal || matches[0];
+      }
+    }
+
     return NextResponse.json({
       parsed,
       rawText: text.substring(0, 2000),
