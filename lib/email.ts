@@ -1,16 +1,15 @@
 /**
  * Email Sending Utility
  * 
- * Uses Nodemailer with Gmail SMTP for actual email delivery.
- * Requires GMAIL_USER and GMAIL_APP_PASSWORD environment variables.
- * 
- * App Password setup: Google Account > Security > 2-Step Verification > App Passwords
+ * Uses Resend with custom domain (talentflow.elunari.uk) for email delivery.
+ * Requires RESEND_API_KEY environment variable.
  */
 
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-const GMAIL_USER = process.env.GMAIL_USER || "";
-const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || "";
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+const FROM_EMAIL = "recruiting@talentflow.elunari.uk";
+const FROM_NAME = "TalentFlow AI";
 
 interface EmailOptions {
   to: string;
@@ -26,37 +25,32 @@ interface EmailResult {
   error?: string;
 }
 
-function createTransport() {
-  if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
-    throw new Error("Gmail credentials not configured (GMAIL_USER, GMAIL_APP_PASSWORD)");
-  }
-
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: GMAIL_USER,
-      pass: GMAIL_APP_PASSWORD,
-    },
-  });
-}
-
 /**
- * Send an email via Gmail SMTP.
+ * Send an email via Resend (talentflow.elunari.uk domain).
  */
 export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
   try {
-    const transport = createTransport();
+    if (!RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY not configured");
+    }
 
-    const info = await transport.sendMail({
-      from: `"TalentFlow AI" <${GMAIL_USER}>`,
-      to: options.to,
+    const resend = new Resend(RESEND_API_KEY);
+
+    const { data, error } = await resend.emails.send({
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      to: [options.to],
       subject: options.subject,
       html: options.html,
       text: options.text || options.html.replace(/<[^>]*>/g, ""),
-      replyTo: options.replyTo || GMAIL_USER,
+      replyTo: options.replyTo || FROM_EMAIL,
     });
 
-    return { success: true, messageId: info.messageId };
+    if (error) {
+      console.error("[Email]", error.message);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, messageId: data?.id };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Email send failed";
     console.error("[Email]", message);
@@ -68,7 +62,7 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
  * Check if email credentials are configured.
  */
 export function isEmailConfigured(): boolean {
-  return Boolean(GMAIL_USER && GMAIL_APP_PASSWORD);
+  return Boolean(RESEND_API_KEY);
 }
 
 /**

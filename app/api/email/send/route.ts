@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     if (!isEmailConfigured()) {
       return NextResponse.json(
-        { error: "Email not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD environment variables." },
+        { error: "Email not configured. Set RESEND_API_KEY environment variable." },
         { status: 503 }
       );
     }
@@ -116,6 +116,6 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     configured: isEmailConfigured(),
-    provider: "Gmail SMTP",
+    provider: "Resend (talentflow.elunari.uk)",
   });
 }

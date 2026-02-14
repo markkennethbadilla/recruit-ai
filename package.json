@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@types/nodemailer": "^7.0.9",
     "@xyflow/react": "^12.10.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.34.0",
@@ -17,11 +16,11 @@
     "lucide-react": "^0.563.0",
     "mermaid": "^11.12.2",
     "next": "16.1.6",
-    "nodemailer": "^8.0.1",
     "pdf-parse": "1.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-dropzone": "^15.0.0",
+    "resend": "^6.9.2",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
