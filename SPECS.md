@@ -9,22 +9,23 @@
 
 | Rule | Detail |
 |------|--------|
-| **Budget** | $0/mo. Every service must be free-tier or self-hosted. Never introduce paid dependencies. |
-| **Server** | Spare Windows laptop (i5-8th gen, 8GB RAM). No Docker/WSL — native Windows only. |
+| **Budget** | ~$5/mo max for backend VPS. Minimize cost everywhere else. |
+| **Backend Server** | Cheap Linux VPS (~$4-5/mo) running Docker. Hetzner CX22 recommended. |
 | **Frontend hosting** | Vercel (free tier). The Next.js app deploys here. |
-| **Tunnel** | Cloudflare Tunnel (free) exposes server services to the internet. |
+| **Tunnel** | Cloudflare Tunnel (free) exposes VPS services to the internet. |
 | **Domain** | `elunari.uk` — managed via Cloudflare DNS (free). |
 | **No localhost** | All service URLs in code/config must point to public `*.elunari.uk` domains, never `localhost`. |
+| **No local hosting** | NEVER run backend services on the user's laptops. All backend runs on the VPS. |
 
 ---
 
 ## Architecture
 
 ```
-[Vercel]                        [Server Laptop]
-  Next.js app                     n8n (native Node.js)
-  talentflow-ai.vercel.app        NocoDB (native Node.js)
-       |                          cloudflared tunnel
+[Vercel]                        [VPS - Linux Docker]
+  Next.js app                     n8n (Docker container)
+  talentflow-ai.vercel.app        NocoDB (Docker container)
+       |                          cloudflared (Docker container)
        |                              |
        +--- HTTPS ----> n8n.elunari.uk (port 5678)
        +--- HTTPS ----> db.elunari.uk  (port 8080)
@@ -32,8 +33,8 @@
 
 ### Public URLs
 
-| Service | URL | Port on server |
-|---------|-----|----------------|
+| Service | URL | Port on VPS |
+|---------|-----|-------------|
 | n8n | `https://n8n.elunari.uk` | 5678 |
 | NocoDB (CRM) | `https://db.elunari.uk` | 8080 |
 | App (Vercel) | `https://talentflow-ai.vercel.app` | — |
@@ -42,20 +43,18 @@
 
 ## Tech Stack — WeAssist Mapping
 
-This project demonstrates competency in the WeAssist AI Engineer tech stack using **free alternatives only**.
-
 | WeAssist Requires | TalentFlow Uses | Cost | Notes |
 |-------------------|-----------------|------|-------|
-| **n8n** | n8n Community (self-hosted) | Free | Native Windows on server laptop |
-| **AirTable** | NocoDB (self-hosted) | Free | AirTable-compatible REST API, runs on Node.js |
+| **n8n** | n8n Community (Docker on VPS) | ~$5/mo VPS | Runs 24/7 on cheap Linux VPS |
+| **AirTable** | NocoDB (Docker on VPS) | included | AirTable-compatible REST API |
 | **OpenAI / Claude** | OpenRouter (free models) | Free | Llama 3.3 70B, DeepSeek, Qwen, Gemma — GPT-4o-mini fallback ($0.15/1M tokens) |
 | **ElevenLabs** | ElevenLabs (free tier) | Free | 10,000 chars/month for voice outreach demos |
-| **HubSpot / CRM** | NocoDB Candidates table | Free | Same schema as AirTable was using |
-| **Make.com / Zapier** | n8n workflows | Free | 5 workflows: intake, outreach, sync, health, report |
+| **HubSpot / CRM** | NocoDB Candidates table | included | Same schema as AirTable was using |
+| **Make.com / Zapier** | n8n workflows | included | 5 workflows: intake, outreach, sync, health, report |
 | **Google Data Studio** | Built-in dashboard | Free | Automations page with live metrics |
 | **Slack / Teams** | n8n webhook notifications | Free | Alert on health failures via webhook |
-| **Docker** | Not used on server | — | User requires native Windows, no Docker/WSL overhead |
-| **Python / Node.js** | Node.js (Next.js + n8n + NocoDB) | Free | Everything runs on Node.js |
+| **Docker** | Docker on VPS | included | n8n + NocoDB + cloudflared in docker-compose |
+| **Python / Node.js** | Node.js (Next.js frontend) | Free | Frontend on Vercel, backend services in Docker |
 | **Whisper** | Not yet implemented | — | Planned: voice-to-text in pipeline |
 
 ---
@@ -63,27 +62,26 @@ This project demonstrates competency in the WeAssist AI Engineer tech stack usin
 ## Services Detail
 
 ### n8n (Workflow Orchestration)
-- **Location**: Server laptop, native Windows
+- **Location**: VPS (Docker container)
 - **URL**: `https://n8n.elunari.uk`
-- **Setup**: `server-setup.ps1` installs via npm, configures as Windows Service
+- **Setup**: `docker-compose up -d` on VPS
 - **Workflows**: 5 (Candidate Intake, Smart Outreach, Data Sync, Health Monitor, Pipeline Report)
-- **Data**: SQLite (n8n default), stored in `%USERPROFILE%\.n8n`
+- **Data**: SQLite (n8n default), Docker volume
 
 ### NocoDB (CRM / AirTable Replacement)
-- **Location**: Server laptop, native Windows
+- **Location**: VPS (Docker container)
 - **URL**: `https://db.elunari.uk`
-- **Setup**: `server-setup.ps1` installs via npm, configures as Windows Service
-- **Why NocoDB**: Open-source AirTable alternative with REST API. Free, self-hosted, Node.js-native.
+- **Setup**: `docker-compose up -d` on VPS
+- **Why NocoDB**: Open-source AirTable alternative with REST API. Docker image works perfectly.
 - **Tables**: `Candidates` (Name, Email, Phone, Score, Recommendation, Skills, Job Title, Model, Processed At)
-- **Data**: SQLite (NocoDB default), stored in `nocodb/` directory
+- **Data**: SQLite (NocoDB default), Docker volume
 
 ### Cloudflare Tunnel
-- **Location**: Server laptop, native Windows
-- **Setup**: `server-setup.ps1` installs `cloudflared` via winget, configures as Windows Service
-- **Tunnel ID**: `e9835e55-f3e7-4b78-b84f-81b6de1aa463`
+- **Location**: VPS (Docker container)
+- **Setup**: `docker-compose up -d` with tunnel token
 - **Routes**:
-  - `n8n.elunari.uk` → `http://localhost:5678`
-  - `db.elunari.uk` → `http://localhost:8080`
+  - `n8n.elunari.uk` → `http://n8n:5678`
+  - `db.elunari.uk` → `http://nocodb:8080`
   - `talentflow-ai.elunari.uk` → Vercel (DNS only, not tunneled)
 
 ### Next.js App (Frontend + API)
@@ -100,7 +98,7 @@ This project demonstrates competency in the WeAssist AI Engineer tech stack usin
 # AI
 OPENROUTER_API_KEY=sk-or-v1-...
 
-# n8n (remote server)
+# n8n (remote VPS)
 N8N_URL=https://n8n.elunari.uk
 NEXT_PUBLIC_N8N_URL=https://n8n.elunari.uk
 N8N_API_KEY=...                          # Generated in n8n Settings → API
@@ -126,8 +124,6 @@ APP_URL=https://talentflow-ai.vercel.app
 
 | File | Purpose |
 |------|---------|
-| `server-setup.ps1` | One-shot script to run on server laptop. Installs n8n + NocoDB + cloudflared natively. |
-| `laptop-setup.ps1` | Legacy Docker-based setup (deprecated — use `server-setup.ps1` instead) |
 | `n8n/provision.mjs` | Creates all 5 n8n workflows via API |
 | `lib/nocodb.ts` | NocoDB client (replaces `lib/airtable.ts`) |
 | `lib/n8n.ts` | n8n webhook client |
@@ -135,14 +131,16 @@ APP_URL=https://talentflow-ai.vercel.app
 | `app/automations/page.tsx` | Dashboard showing all integrations |
 | `components/ArchitectureFlow.tsx` | System architecture diagram |
 | `SPECS.md` | This file |
+| `CONVERSATION-SUMMARY.md` | Summary of prior session for agent context |
 
 ---
 
 ## Rules for Agents
 
-1. **Never introduce paid services.** If a feature needs an external service, find a free self-hosted alternative.
-2. **Never use Docker/WSL on the server laptop.** Everything must run natively on Windows.
+1. **Keep costs under $5/month.** VPS is the only paid service. Everything else must be free-tier.
+2. **Backend runs on the VPS only.** NEVER install or run n8n/NocoDB/backend services on the user's laptops.
 3. **Never use `localhost` in config.** All URLs must be `*.elunari.uk` public endpoints.
 4. **The frontend deploys to Vercel.** Don't add server-side dependencies that won't work on Vercel's serverless functions.
-5. **Keep the server lightweight.** The laptop has 8GB RAM — services must be frugal.
+5. **Docker on the VPS is fine.** Use docker-compose for all backend services.
 6. **Read this file first** before making architecture or dependency decisions.
+7. **Zero tinkering.** If something doesn't work in 5 minutes, find a simpler alternative.
