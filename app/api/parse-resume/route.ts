@@ -24,23 +24,13 @@ export async function POST(request: NextRequest) {
       const data = await pdfParse(buffer);
       text = data.text;
 
-      // Extract mailto links from PDF annotations (many resumes use clickable "Email" links)
-      try {
-        // @ts-expect-error - pdfjs-dist legacy build has no type declarations
-        const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
-        const doc = await getDocument({ data: new Uint8Array(buffer) }).promise;
-        for (let i = 1; i <= doc.numPages; i++) {
-          const page = await doc.getPage(i);
-          const annots = await page.getAnnotations();
-          for (const annot of annots) {
-            if (annot.url && typeof annot.url === "string" && annot.url.startsWith("mailto:")) {
-              pdfMailtoEmails.push(annot.url.replace("mailto:", "").trim());
-            }
-          }
-        }
-      } catch (e) {
-        // Annotation extraction is best-effort; don't fail the parse
-        console.warn("[Parse] PDF annotation extraction failed:", e instanceof Error ? e.message : e);
+      // Extract mailto links from raw PDF bytes (PDF stores URI annotations as plain text)
+      // This avoids needing pdfjs-dist which has bundler issues on Vercel
+      const rawPdfStr = buffer.toString("latin1");
+      const mailtoRegex = /mailto:([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/g;
+      let mailtoMatch;
+      while ((mailtoMatch = mailtoRegex.exec(rawPdfStr)) !== null) {
+        pdfMailtoEmails.push(mailtoMatch[1]);
       }
     } else if (file.name.endsWith(".txt")) {
       text = buffer.toString("utf-8");
