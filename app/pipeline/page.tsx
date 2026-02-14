@@ -1806,7 +1806,7 @@ export default function PipelinePage() {
           </div>
           {/* Right: Tips sidebar on desktop */}
           {pipelineTips.length > 0 && (
-            <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0 self-start sticky top-20 max-h-[70vh] overflow-y-auto scrollbar-mini pr-1">
+            <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0 self-start sticky top-20 pr-1">
               <PageTips page="pipeline" />
             </aside>
           )}
