@@ -85,7 +85,7 @@ export function buildOutreachHTML(emailBody: string, candidateName: string): str
   ${paragraphs}
   <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 24px 0;">
   <p style="font-size: 11px; color: #999; margin: 0;">
-    Sent via <a href="https://talentflow-ai.vercel.app" style="color: #6366f1;">TalentFlow AI</a>
+    Sent via <a href="https://talentflow-ai.elunari.uk" style="color: #6366f1;">TalentFlow AI</a>
   </p>
 </body>
 </html>`.trim();
