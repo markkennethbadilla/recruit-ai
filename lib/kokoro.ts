@@ -98,7 +98,7 @@ export async function textToSpeech(
 
 /**
  * Generate a personalized outreach voice message for a candidate
- * Creates a professional recruitment script and converts to audio
+ * Creates a professional recruitment script via LLM and converts to audio
  */
 export async function generateOutreachAudio(
   candidateName: string,
@@ -107,34 +107,82 @@ export async function generateOutreachAudio(
   recommendation: string,
   options: TTSOptions = {}
 ): Promise<TTSResult & { script: string }> {
-  const script = buildOutreachScript(candidateName, jobTitle, score, recommendation);
+  const script = await buildOutreachScript(candidateName, jobTitle, score, recommendation);
   const result = await textToSpeech(script, options);
   return { ...result, script };
 }
 
 /**
- * Build a natural outreach script for voice synthesis
- * Anti-AI rules: no em-dashes, no "seamless/robust/transformative",
- * mix short + long sentences, sound like a real recruiter talking
+ * Dynamically generate a natural voice outreach script via LLM.
+ * Uses OpenRouter auto cascade so every candidate gets a unique,
+ * genuinely human-sounding message instead of a template with swapped variables.
  */
-function buildOutreachScript(
+async function buildOutreachScript(
   candidateName: string,
   jobTitle: string,
   score: number,
   recommendation: string
-): string {
+): Promise<string> {
+  const { callOpenRouter } = await import("@/lib/openrouter");
   const firstName = candidateName.split(" ")[0];
-  const scoreLabel =
-    score >= 80 ? "really strong" : score >= 60 ? "solid" : "interesting";
 
-  return (
-    `Hey ${firstName}, quick message from the TalentFlow team. ` +
-    `So we took a look at your background for the ${jobTitle} role, and honestly? You scored a ${score} out of 100, which is a ${scoreLabel} result. ` +
-    `A few things stood out to us: ${recommendation}. ` +
-    `We'd love to hop on a quick call to talk next steps. ` +
-    `Check your email when you get a chance, or just reply here and we'll get something on the calendar. ` +
-    `Looking forward to connecting, ${firstName}. Talk soon.`
-  );
+  const systemPrompt = [
+    "You write voice message scripts for a recruiter reaching out to a candidate.",
+    "The script will be read aloud by a text-to-speech engine, so it must sound like a real human talking casually into their phone.",
+    "",
+    "HARD RULES you must follow exactly:",
+    "- Output ONLY the script text. No labels, no quotes, no stage directions, no metadata.",
+    "- The entire output must be ONE flowing paragraph. No line breaks, no bullet points, no numbered lists.",
+    "- ONLY use periods and commas as punctuation. No colons, semicolons, exclamation marks, question marks, parentheses, dashes, em-dashes, ellipses, or any other symbols.",
+    "- Keep it between 60 and 100 words. This is a quick voice note, not a speech.",
+    "- Use natural filler expressions like 'honestly', 'I mean', 'you know', 'like', 'look', 'so yeah', 'not gonna lie' sparingly but authentically.",
+    "- Vary sentence length wildly. Some sentences should be 3 to 5 words. Others 15 to 20. This creates burstiness.",
+    "- NEVER use these words: seamless, robust, transformative, leverage, synergy, spearhead, foster, utilize, delighted, thrilled, excited to share.",
+    "- Sound like a 28-year-old recruiter who genuinely found someone cool, not like a corporate email.",
+    "- End with a casual sign-off that mentions their first name.",
+    "- Do NOT start with 'Hey' every time. Vary your openings.",
+  ].join("\n");
+
+  const userPrompt = [
+    `Candidate first name: ${firstName}`,
+    `Role: ${jobTitle}`,
+    `Their evaluation score: ${score} out of 100`,
+    `What stood out about them: ${recommendation}`,
+    "",
+    "Write the voice message script now. Remember, one paragraph, only periods and commas, casual and human.",
+  ].join("\n");
+
+  try {
+    let script = await callOpenRouter(
+      [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      "auto",
+      0.9 // high temperature for variety and naturalness
+    );
+
+    // Post-process: enforce punctuation rules (strip any symbols the LLM snuck in)
+    script = script
+      .replace(/[\r\n]+/g, " ")           // flatten to single paragraph
+      .replace(/[""\u201C\u201D]/g, "")    // remove quotes
+      .replace(/[;:!?()\[\]{}\u2014\u2013\u2026]/g, ",") // replace forbidden punctuation with commas
+      .replace(/\s*,\s*,+/g, ",")          // clean double commas
+      .replace(/,\./g, ".")               // clean comma-period
+      .replace(/\s{2,}/g, " ")            // collapse whitespace
+      .trim();
+
+    // Strip wrapping quotes if LLM added them
+    if ((script.startsWith('"') && script.endsWith('"')) || (script.startsWith("'") && script.endsWith("'"))) {
+      script = script.slice(1, -1).trim();
+    }
+
+    return script;
+  } catch (err) {
+    // Fallback: simple static script if LLM is completely unavailable
+    console.warn("[Kokoro] LLM script generation failed, using fallback:", err instanceof Error ? err.message : err);
+    return `So ${firstName}, I was going through candidates for the ${jobTitle} role and honestly your profile caught my eye. You scored a ${score} out of 100 which is really solid, ${recommendation.toLowerCase().replace(/^(key strengths?:?\s*)/i, "")}. I think we should chat about this, like hop on a quick call when you have a minute. Check your email and let me know, talk soon ${firstName}.`;
+  }
 }
 
 /**
