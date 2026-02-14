@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
 
       // Extract mailto links from PDF annotations (many resumes use clickable "Email" links)
       try {
+        // @ts-expect-error - pdfjs-dist legacy build has no type declarations
         const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
         const doc = await getDocument({ data: new Uint8Array(buffer) }).promise;
         for (let i = 1; i <= doc.numPages; i++) {
