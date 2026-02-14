@@ -64,6 +64,17 @@ export default function RootLayout({
             <main id="main-content">
               {children}
             </main>
+            {/* Global footer with legal links */}
+            <footer className="relative z-10 border-t border-[var(--glass-border)] mt-auto">
+              <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--text-muted)]">
+                <span>&copy; {new Date().getFullYear()} TalentFlow AI. Powered by AI. Built for humans.</span>
+                <div className="flex items-center gap-4">
+                  <a href="/privacy" className="hover:text-purple-400 transition-colors">Privacy Policy</a>
+                  <a href="/terms" className="hover:text-purple-400 transition-colors">Terms of Service</a>
+                  <a href="/eval" className="hover:text-purple-400 transition-colors">AI Ethics</a>
+                </div>
+              </div>
+            </footer>
             <NovaGuardian />
           </TipsProvider>
         </ThemeProvider>

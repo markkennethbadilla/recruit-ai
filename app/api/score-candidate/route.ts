@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callOpenRouter } from "@/lib/openrouter";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 15 scoring requests per minute per IP
+  const ip = getClientIp(request.headers);
+  const rl = checkRateLimit(`score:${ip}`, 15);
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
+
   try {
     const { parsedResume, jobDescription, model } = await request.json();
 

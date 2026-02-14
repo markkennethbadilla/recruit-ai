@@ -42,6 +42,7 @@ export default function ApplyPage() {
   const [resultMessage, setResultMessage] = useState("");
   const [applicationId, setApplicationId] = useState("");
   const [showPositions, setShowPositions] = useState(false);
+  const [consent, setConsent] = useState(false);
   const { theme } = useTheme();
 
   const onDrop = useCallback((accepted: File[]) => {
@@ -61,6 +62,12 @@ export default function ApplyPage() {
     if (!name.trim() || !email.trim() || !position || !file) {
       setSubmitState("error");
       setResultMessage("Please fill in all required fields and upload your resume.");
+      return;
+    }
+
+    if (!consent) {
+      setSubmitState("error");
+      setResultMessage("Please agree to the data processing terms before submitting.");
       return;
     }
 
@@ -363,20 +370,39 @@ export default function ApplyPage() {
             )}
           </button>
 
-          <p className="text-[10px] text-[var(--text-muted)] text-center">
-            By submitting, you agree that your resume will be analyzed by our AI screening pipeline.
-            A human recruiter makes all final decisions.
-          </p>
+          {/* Consent Checkbox */}
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-1 w-4 h-4 rounded border-[var(--glass-border)] accent-purple-500 cursor-pointer"
+            />
+            <span className="text-xs text-[var(--text-muted)] leading-relaxed">
+              I consent to my data being processed by AI for recruitment evaluation purposes.
+              My resume will be analyzed by AI models and results stored for recruiter review.
+              I understand I can request data deletion at any time.
+              See our{" "}
+              <Link href="/privacy" className="text-purple-400 hover:underline">Privacy Policy</Link>
+              {" "}and{" "}
+              <Link href="/terms" className="text-purple-400 hover:underline">Terms of Service</Link>.
+            </span>
+          </label>
         </motion.form>
 
-        {/* Footer link to pipeline for recruiters */}
-        <div className="text-center mt-8">
+        {/* Footer links */}
+        <div className="text-center mt-8 space-y-2">
           <Link
             href="/pipeline"
             className="text-xs text-[var(--text-muted)] hover:text-purple-400 transition-colors"
           >
             Recruiter? Go to the Pipeline Dashboard
           </Link>
+          <div className="flex items-center justify-center gap-4 text-[10px] text-[var(--text-muted)]">
+            <Link href="/privacy" className="hover:text-purple-400 transition-colors">Privacy Policy</Link>
+            <span>|</span>
+            <Link href="/terms" className="hover:text-purple-400 transition-colors">Terms of Service</Link>
+          </div>
         </div>
       </div>
     </div>

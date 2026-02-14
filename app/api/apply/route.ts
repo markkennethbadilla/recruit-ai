@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 /**
  * POST /api/apply
@@ -6,6 +7,11 @@ import { NextRequest, NextResponse } from "next/server";
  * Stores the submission and optionally triggers the pipeline.
  */
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 applications per minute per IP
+  const ip = getClientIp(request.headers);
+  const rl = checkRateLimit(`apply:${ip}`, 5);
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
+
   try {
     const formData = await request.formData();
     const name = formData.get("name") as string;
