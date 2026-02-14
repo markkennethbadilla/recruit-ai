@@ -7,7 +7,7 @@ const NOCODB_API_TOKEN = process.env.NOCODB_API_TOKEN || "";
 const NOCODB_TABLE_ID = process.env.NOCODB_TABLE_ID || "";
 
 const headers = (): Record<string, string> => ({
-  "xc-auth": NOCODB_API_TOKEN,
+  "xc-token": NOCODB_API_TOKEN,
   "Content-Type": "application/json",
 });
 

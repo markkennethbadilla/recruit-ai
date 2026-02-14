@@ -203,6 +203,13 @@ export default function AutomationsPage() {
 
   useEffect(() => {
     fetchStatus();
+
+    // Auto-reconnect: poll every 30s when any service is down, 60s when all connected
+    const intervalId = setInterval(() => {
+      fetchStatus();
+    }, 30000);
+
+    return () => clearInterval(intervalId);
   }, [fetchStatus]);
 
   async function testWorkflow(workflowName: string) {
@@ -398,7 +405,12 @@ export default function AutomationsPage() {
               </div>
             )}
             {n8nStatus?.error && (
-              <p className="text-sm text-red-400 mt-2">{n8nStatus.error}</p>
+              <div className="mt-2 space-y-1">
+                <p className="text-sm text-red-400">{n8nStatus.error}</p>
+                <p className={cn("text-xs flex items-center gap-1", isDark ? "text-gray-500" : "text-gray-400")}>
+                  <RefreshCw className="w-3 h-3 animate-spin" /> Auto-reconnecting every 30s
+                </p>
+              </div>
             )}
           </motion.div>
 
