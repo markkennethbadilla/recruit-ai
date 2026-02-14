@@ -119,15 +119,17 @@ export async function getN8nStatus(): Promise<{
 
     if (!res.ok) return { connected: false, workflows: [], error: `API returned ${res.status}` };
 
-    const { data } = await res.json();
+    const json = await res.json();
+    // n8n API v1 returns { data: [...] }, but handle edge cases
+    const data = Array.isArray(json.data) ? json.data : Array.isArray(json) ? json : [];
     return {
       connected: true,
       workflows: data.map((wf: Record<string, unknown>) => ({
-        id: wf.id,
-        name: wf.name,
-        active: wf.active,
-        createdAt: wf.createdAt,
-        updatedAt: wf.updatedAt,
+        id: String(wf.id || ''),
+        name: String(wf.name || 'Unnamed'),
+        active: Boolean(wf.active),
+        createdAt: String(wf.createdAt || ''),
+        updatedAt: String(wf.updatedAt || ''),
       })),
     };
   } catch (err) {

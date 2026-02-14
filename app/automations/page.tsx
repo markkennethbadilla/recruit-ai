@@ -307,9 +307,16 @@ export default function AutomationsPage() {
         result = await res.json();
       }
 
+      // Determine actual success: check if the API response itself indicates failure
+      // n8nConnected: false means n8n webhook failed even if the API route returned 200
+      const hasN8nError = result?.n8nConnected === false || result?.n8n?.connected === false;
+      const hasExplicitError = result?.error || result?.success === false;
+      const isActuallySuccessful = result && !hasExplicitError && !hasN8nError;
       setTestResults((prev) => ({
         ...prev,
-        [workflowName]: { success: true, data: result },
+        [workflowName]: isActuallySuccessful
+          ? { success: true, data: result }
+          : { success: false, data: result, error: result?.error || (hasN8nError ? "n8n webhook unreachable" : "Workflow returned an error") },
       }));
     } catch (err) {
       setTestResults((prev) => ({
