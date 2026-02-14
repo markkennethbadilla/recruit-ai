@@ -236,7 +236,7 @@ export default function FeaturePage({
   const Icon = feature.icon;
 
   return (
-    <div className="min-h-screen selection:bg-purple-500/30">
+    <div className="min-h-screen selection:bg-purple-500/30 overflow-x-hidden">
       <div className="gradient-bg opacity-50" />
 
       {/* Nav */}

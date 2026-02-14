@@ -323,25 +323,25 @@ export default function AutomationsPage() {
   const isDark = theme === "dark";
 
   return (
-    <div className={cn("min-h-screen transition-colors duration-300", isDark ? "bg-[#0a0a0f]" : "bg-gray-50")}>
+    <div className={cn("min-h-screen transition-colors duration-300 overflow-x-hidden", isDark ? "bg-[#0a0a0f]" : "bg-gray-50")}>
       {/* Header */}
       <header className={cn("border-b sticky top-0 z-50 backdrop-blur-xl", isDark ? "border-white/5 bg-[#0a0a0f]/80" : "border-gray-200 bg-white/80")}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/pipeline" className={cn("p-2 rounded-lg transition-colors", isDark ? "hover:bg-white/5 text-gray-400" : "hover:bg-gray-100 text-gray-600")}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <Link href="/pipeline" className={cn("p-2 rounded-lg transition-colors flex-shrink-0", isDark ? "hover:bg-white/5 text-gray-400" : "hover:bg-gray-100 text-gray-600")}>
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/10 rounded-lg">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="p-2 bg-purple-500/10 rounded-lg flex-shrink-0">
                 <Zap className="w-5 h-5 text-purple-400" />
               </div>
-              <div>
-                <h1 className={cn("text-xl font-bold", isDark ? "text-white" : "text-gray-900")}>Automations</h1>
-                <p className={cn("text-sm", isDark ? "text-gray-400" : "text-gray-500")}>n8n Workflow Orchestration</p>
+              <div className="min-w-0">
+                <h1 className={cn("text-lg sm:text-xl font-bold truncate", isDark ? "text-white" : "text-gray-900")}>Automations</h1>
+                <p className={cn("text-xs sm:text-sm truncate", isDark ? "text-gray-400" : "text-gray-500")}>n8n Workflow Orchestration</p>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
             <TipsToggle />
             <button onClick={fetchStatus} disabled={loading} className={cn("p-2 rounded-lg transition-all", isDark ? "hover:bg-white/5 text-gray-400" : "hover:bg-gray-100 text-gray-600")}>
               <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
@@ -353,9 +353,18 @@ export default function AutomationsPage() {
               href="https://n8n.elunari.uk"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 text-purple-400 rounded-lg hover:bg-purple-500/20 transition-all text-sm font-medium"
+              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-purple-500/10 text-purple-400 rounded-lg hover:bg-purple-500/20 transition-all text-sm font-medium"
             >
               Open n8n Editor <ExternalLink className="w-4 h-4" />
+            </a>
+            <a
+              href="https://n8n.elunari.uk"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="sm:hidden p-2 bg-purple-500/10 text-purple-400 rounded-lg hover:bg-purple-500/20 transition-all"
+              title="Open n8n Editor"
+            >
+              <ExternalLink className="w-5 h-5" />
             </a>
           </div>
         </div>
@@ -628,22 +637,22 @@ export default function AutomationsPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 * (i + 1) }}
-                  className={cn("rounded-2xl border p-6 group", isDark ? "bg-white/[0.02] border-white/5 hover:border-white/10" : "bg-white border-gray-200 hover:border-gray-300")}
+                  className={cn("rounded-2xl border p-4 sm:p-6 group overflow-hidden", isDark ? "bg-white/[0.02] border-white/5 hover:border-white/10" : "bg-white border-gray-200 hover:border-gray-300")}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className={cn("p-3 rounded-xl", meta.bg)}>
-                        <Icon className={cn("w-6 h-6", meta.color)} />
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+                      <div className={cn("p-2 sm:p-3 rounded-xl flex-shrink-0", meta.bg)}>
+                        <Icon className={cn("w-5 h-5 sm:w-6 sm:h-6", meta.color)} />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-1">
-                          <h3 className={cn("font-semibold", isDark ? "text-white" : "text-gray-900")}>{wf.name}</h3>
-                          <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", wf.active ? "bg-emerald-500/10 text-emerald-400" : "bg-gray-500/10 text-gray-400")}>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
+                          <h3 className={cn("font-semibold text-sm sm:text-base truncate", isDark ? "text-white" : "text-gray-900")}>{wf.name}</h3>
+                          <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0", wf.active ? "bg-emerald-500/10 text-emerald-400" : "bg-gray-500/10 text-gray-400")}>
                             {wf.active ? "Active" : "Inactive"}
                           </span>
                         </div>
                         <p className={cn("text-sm mb-3", isDark ? "text-gray-400" : "text-gray-500")}>{meta.description}</p>
-                        <div className={cn("flex items-center gap-4 text-xs", isDark ? "text-gray-500" : "text-gray-400")}>
+                        <div className={cn("flex flex-wrap items-center gap-3 sm:gap-4 text-xs", isDark ? "text-gray-500" : "text-gray-400")}>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             Updated {new Date(wf.updatedAt).toLocaleDateString()}
@@ -663,12 +672,12 @@ export default function AutomationsPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 self-end sm:self-start flex-shrink-0">
                       <a
                         href={`https://n8n.elunari.uk/workflow/${wf.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={cn("p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100", isDark ? "hover:bg-white/5 text-gray-400" : "hover:bg-gray-100 text-gray-600")}
+                        className={cn("p-2 rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100", isDark ? "hover:bg-white/5 text-gray-400" : "hover:bg-gray-100 text-gray-600")}
                         title="Open in n8n"
                       >
                         <ExternalLink className="w-4 h-4" />
@@ -677,7 +686,7 @@ export default function AutomationsPage() {
                         onClick={() => testWorkflow(wf.name)}
                         disabled={isTesting || !wf.active}
                         className={cn(
-                          "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                          "flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all",
                           isTesting
                             ? "bg-purple-500/20 text-purple-400 cursor-wait"
                             : testResult?.success

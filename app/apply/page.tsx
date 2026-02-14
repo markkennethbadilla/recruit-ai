@@ -132,7 +132,7 @@ export default function ApplyPage() {
   }
 
   return (
-    <div className="min-h-screen pb-10 selection:bg-purple-500/30">
+    <div className="min-h-screen pb-10 selection:bg-purple-500/30 overflow-x-hidden">
       <div className="gradient-bg opacity-50" />
 
       {/* Nav */}

@@ -580,7 +580,7 @@ export default function PipelinePage() {
   const selectedModel = MODELS.find((m) => m.id === model)!;
 
   return (
-    <div className="min-h-screen pb-6 sm:pb-10 selection:bg-purple-500/30">
+    <div className="min-h-screen pb-6 sm:pb-10 selection:bg-purple-500/30 overflow-x-hidden">
       <div className="gradient-bg opacity-50" />
       
       {/* Floating Controls */}

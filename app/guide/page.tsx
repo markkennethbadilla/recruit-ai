@@ -653,7 +653,7 @@ export default function GuidePage() {
   const [activeTab, setActiveTab] = useState<"docs" | "architecture" | "faq" | "chat">("docs");
 
   return (
-    <div className="min-h-screen selection:bg-purple-500/30">
+    <div className="min-h-screen selection:bg-purple-500/30 overflow-x-hidden">
       {/* Compact Nav */}
       <div className="fixed top-3 sm:top-4 left-3 sm:left-5 z-50">
         <Link href="/" className="glass-chip flex items-center gap-2 px-3 py-2 rounded-xl transition-all group hover:scale-105">

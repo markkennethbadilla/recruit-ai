@@ -214,7 +214,7 @@ export default function EvalPage() {
     : "";
 
   return (
-    <div className="min-h-screen selection:bg-purple-500/30" role="main" aria-label="AI Ethics Evaluation Dashboard">
+    <div className="min-h-screen selection:bg-purple-500/30 overflow-x-hidden" role="main" aria-label="AI Ethics Evaluation Dashboard">
       {/* Compact Nav */}
       <div className="fixed top-3 sm:top-4 left-3 sm:left-5 z-50">
         <Link href="/" className="glass-chip flex items-center gap-2 px-3 py-2 rounded-xl transition-all group hover:scale-105">

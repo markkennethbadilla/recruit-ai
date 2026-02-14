@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import {
   Upload,
   Brain,
+  Menu,
+  X,
   BarChart3,
   MessageSquareText,
   ArrowRight,
@@ -128,8 +130,9 @@ const stats = [
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
-    <div className="min-h-screen selection:bg-purple-500/30">
+    <div className="min-h-screen selection:bg-purple-500/30 overflow-x-hidden">
       
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-6 py-3 sm:py-5 transition-all duration-300">
@@ -187,8 +190,61 @@ export default function Home() {
                 Launch Pipeline 
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
+              {/* Mobile hamburger */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2.5 rounded-xl bg-[var(--glass)] border border-[var(--glass-border)] hover:bg-[var(--glass-hover)] transition-all"
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
             </div>
           </div>
+          {/* Mobile dropdown menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden mt-2 rounded-2xl border border-[var(--glass-border)] p-3 space-y-1 shadow-xl" style={{ background: theme === 'dark' ? '#13141f' : '#ffffff', backdropFilter: 'none' }}>
+              <Link
+                href="/pipeline"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[var(--glass-hover)] transition-all"
+              >
+                <ArrowRight className="w-4 h-4 text-purple-400" />
+                <span className="font-medium text-sm">Launch Pipeline</span>
+              </Link>
+              <Link
+                href="/automations"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[var(--glass-hover)] transition-all"
+              >
+                <Zap className="w-4 h-4 text-purple-400" />
+                <span className="font-medium text-sm">Automations</span>
+              </Link>
+              <Link
+                href="/apply"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[var(--glass-hover)] transition-all"
+              >
+                <User className="w-4 h-4 text-cyan-400" />
+                <span className="font-medium text-sm">Apply</span>
+              </Link>
+              <Link
+                href="/guide"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[var(--glass-hover)] transition-all"
+              >
+                <BookOpen className="w-4 h-4 text-emerald-400" />
+                <span className="font-medium text-sm">Guide</span>
+              </Link>
+              <Link
+                href="/eval"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[var(--glass-hover)] transition-all"
+              >
+                <Shield className="w-4 h-4 text-emerald-400" />
+                <span className="font-medium text-sm">AI Ethics</span>
+              </Link>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -439,7 +495,7 @@ export default function Home() {
           <p className="text-sm text-[var(--text-muted)]">
             © 2026 TalentFlow AI. Built with ❤️ for WeAssist.io
           </p>
-          <div className="flex gap-6 text-[var(--text-muted)]">
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm text-[var(--text-muted)]">
             <Link href="/automations" className="hover:text-[var(--text-primary)] transition-colors">Automations</Link>
             <Link href="/pipeline" className="hover:text-[var(--text-primary)] transition-colors">Pipeline</Link>
             <Link href="/guide" className="hover:text-[var(--text-primary)] transition-colors">Guide</Link>
