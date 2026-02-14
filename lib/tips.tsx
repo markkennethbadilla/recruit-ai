@@ -243,12 +243,13 @@ export function PageTips({ page }: { page: string }) {
   const { enabled, dismissed } = useTips();
   const scrollRef = useRef<HTMLDivElement>(null);
   const pauseRef = useRef(false);
+  const isConstrainedTipsPage = page === "eval";
 
   const tips = ALL_TIPS.filter((t) => t.page === page && !dismissed.has(t.id));
 
   /* Auto-scroll desktop tips slowly so users notice hidden ones */
   useEffect(() => {
-    if (!enabled || tips.length === 0) return;
+    if (!isConstrainedTipsPage || !enabled || tips.length === 0) return;
     const el = scrollRef.current;
     if (!el) return;
     // Only auto-scroll when content overflows
@@ -275,13 +276,13 @@ export function PageTips({ page }: { page: string }) {
       clearTimeout(timer);
       cancelAnimationFrame(raf);
     };
-  }, [enabled, tips.length]);
+  }, [enabled, tips.length, isConstrainedTipsPage]);
 
   if (!enabled || tips.length === 0) return null;
   return (
     <div
       ref={scrollRef}
-      className="flex flex-col gap-3"
+      className={isConstrainedTipsPage ? "flex flex-col gap-3 max-h-[70vh] overflow-y-auto scrollbar-mini pr-1" : "flex flex-col gap-3"}
       onMouseEnter={() => { pauseRef.current = true; }}
       onMouseLeave={() => { pauseRef.current = false; }}
     >
