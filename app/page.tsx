@@ -482,28 +482,6 @@ export default function Home() {
           </div>
         </ScaleIn>
       </section>
-
-      {/* Footer */}
-      <footer className="py-8 sm:py-12 px-4 sm:px-6 border-t border-[var(--border)] bg-[var(--bg-secondary)]">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-lg">TalentFlow AI</span>
-          </div>
-          <p className="text-sm text-[var(--text-muted)]">
-            © 2026 TalentFlow AI. Built with ❤️ for WeAssist.io
-          </p>
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm text-[var(--text-muted)]">
-            <Link href="/automations" className="hover:text-[var(--text-primary)] transition-colors">Automations</Link>
-            <Link href="/pipeline" className="hover:text-[var(--text-primary)] transition-colors">Pipeline</Link>
-            <Link href="/guide" className="hover:text-[var(--text-primary)] transition-colors">Guide</Link>
-            <Link href="/eval" className="hover:text-[var(--text-primary)] transition-colors">AI Ethics</Link>
-            <a href="#" className="hover:text-[var(--text-primary)] transition-colors">Contact</a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

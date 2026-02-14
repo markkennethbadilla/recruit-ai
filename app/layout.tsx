@@ -67,11 +67,19 @@ export default function RootLayout({
             {/* Global footer with legal links */}
             <footer className="relative z-10 border-t border-[var(--glass-border)] mt-auto">
               <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--text-muted)]">
-                <span>&copy; {new Date().getFullYear()} TalentFlow AI. Powered by AI. Built for humans.</span>
-                <div className="flex items-center gap-4">
-                  <a href="/privacy" className="hover:text-purple-400 transition-colors">Privacy Policy</a>
-                  <a href="/terms" className="hover:text-purple-400 transition-colors">Terms of Service</a>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-md bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                    <span className="text-white text-[8px] font-bold">T</span>
+                  </div>
+                  <span>&copy; {new Date().getFullYear()} TalentFlow AI. Powered by AI. Built for humans.</span>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-4">
+                  <a href="/pipeline" className="hover:text-purple-400 transition-colors">Pipeline</a>
+                  <a href="/automations" className="hover:text-purple-400 transition-colors">Automations</a>
+                  <a href="/guide" className="hover:text-purple-400 transition-colors">Guide</a>
                   <a href="/eval" className="hover:text-purple-400 transition-colors">AI Ethics</a>
+                  <a href="/privacy" className="hover:text-purple-400 transition-colors">Privacy</a>
+                  <a href="/terms" className="hover:text-purple-400 transition-colors">Terms</a>
                 </div>
               </div>
             </footer>

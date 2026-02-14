@@ -391,18 +391,13 @@ export default function ApplyPage() {
         </motion.form>
 
         {/* Footer links */}
-        <div className="text-center mt-8 space-y-2">
+        <div className="text-center mt-8">
           <Link
             href="/pipeline"
             className="text-xs text-[var(--text-muted)] hover:text-purple-400 transition-colors"
           >
             Recruiter? Go to the Pipeline Dashboard
           </Link>
-          <div className="flex items-center justify-center gap-4 text-[10px] text-[var(--text-muted)]">
-            <Link href="/privacy" className="hover:text-purple-400 transition-colors">Privacy Policy</Link>
-            <span>|</span>
-            <Link href="/terms" className="hover:text-purple-400 transition-colors">Terms of Service</Link>
-          </div>
         </div>
       </div>
     </div>

@@ -172,13 +172,6 @@ export default function PrivacyPage() {
             </p>
           </Section>
         </div>
-
-        {/* Footer links */}
-        <div className="mt-8 flex items-center justify-center gap-6 text-sm text-[var(--text-muted)]">
-          <Link href="/terms" className="hover:text-purple-400 transition-colors">Terms of Service</Link>
-          <span>|</span>
-          <Link href="/" className="hover:text-purple-400 transition-colors">Back to Home</Link>
-        </div>
       </div>
     </div>
   );

@@ -146,13 +146,6 @@ export default function TermsPage() {
             </p>
           </Section>
         </div>
-
-        {/* Footer links */}
-        <div className="mt-8 flex items-center justify-center gap-6 text-sm text-[var(--text-muted)]">
-          <Link href="/privacy" className="hover:text-purple-400 transition-colors">Privacy Policy</Link>
-          <span>|</span>
-          <Link href="/" className="hover:text-purple-400 transition-colors">Back to Home</Link>
-        </div>
       </div>
     </div>
   );

@@ -457,21 +457,6 @@ export default function FeaturePage({
           </div>
         </motion.div>
       </section>
-
-      {/* Footer */}
-      <footer className="py-8 sm:py-12 px-4 sm:px-6 border-t border-[var(--border)] bg-[var(--bg-secondary)]">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-lg">TalentFlow AI</span>
-          </div>
-          <p className="text-sm text-[var(--text-muted)]">
-            &copy; 2026 TalentFlow AI. Built with ❤️ for WeAssist.io
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }
