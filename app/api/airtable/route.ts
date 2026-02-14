@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pushToAirTable, getAirTableRecords } from "@/lib/airtable";
 
-// POST: Push a candidate record to AirTable
+// POST: Push a candidate record to NocoDB
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET: Retrieve recent candidate records from AirTable
+// GET: Retrieve recent candidate records from NocoDB
 export async function GET() {
   try {
     const result = await getAirTableRecords(20);

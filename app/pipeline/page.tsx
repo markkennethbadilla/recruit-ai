@@ -469,8 +469,8 @@ export default function PipelinePage() {
       });
       refreshHistory();
 
-      // Fire n8n + AirTable + ElevenLabs integrations (AWAIT results for demo visibility)
-      setAutoPilotStatus("Syncing to AirTable + generating voice outreach...");
+      // Fire n8n + NocoDB + ElevenLabs integrations (AWAIT results for demo visibility)
+      setAutoPilotStatus("Syncing to NocoDB + generating voice outreach...");
       const candidatePayload = {
         name: parsed.name,
         email: parsed.email,
@@ -1680,14 +1680,14 @@ export default function PipelinePage() {
                         )}
                       </div>
 
-                      {/* AirTable Status */}
+                      {/* NocoDB Status */}
                       <div className={cn(
                         "glass-card p-4 border-l-2",
                         integrationResults.airtable?.success ? "border-l-emerald-500" : "border-l-gray-500"
                       )}>
                         <div className="flex items-center gap-2 mb-2">
                           <Database className="w-4 h-4 text-emerald-400" />
-                          <span className="text-sm font-semibold text-[var(--text-primary)]">AirTable CRM</span>
+                          <span className="text-sm font-semibold text-[var(--text-primary)]">NocoDB CRM</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           {integrationResults.airtable?.success ? (

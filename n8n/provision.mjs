@@ -13,9 +13,9 @@
  *   WF5: Weekly Pipeline Report (cron → aggregate → email summary)
  */
 
-const N8N_URL = process.env.N8N_URL || "http://localhost:5678";
+const N8N_URL = process.env.N8N_URL || "https://n8n.elunari.uk";
 const N8N_API_KEY = process.env.N8N_API_KEY;
-const APP_URL = process.env.APP_URL || "http://localhost:3000";
+const APP_URL = process.env.APP_URL || "https://talentflow-ai.vercel.app";
 
 if (!N8N_API_KEY) {
   console.error("[!] N8N_API_KEY env var required");

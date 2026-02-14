@@ -145,7 +145,7 @@ const WORKFLOW_META: Record<string, { description: string; icon: typeof Zap; col
     bg: "bg-blue-500/10",
   },
   "WF3: Candidate Data Sync": {
-    description: "Transforms and pushes candidate data to AirTable/CRM in flat record format",
+    description: "Transforms and pushes candidate data to NocoDB/CRM in flat record format",
     icon: Database,
     color: "text-cyan-400",
     bg: "bg-cyan-500/10",
@@ -343,7 +343,7 @@ export default function AutomationsPage() {
               {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
             <a
-              href="http://localhost:5678"
+              href="https://n8n.elunari.uk"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 text-purple-400 rounded-lg hover:bg-purple-500/20 transition-all text-sm font-medium"
@@ -393,7 +393,7 @@ export default function AutomationsPage() {
                 </div>
                 <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
                   <span>Endpoint</span>
-                  <span className="font-mono">localhost:5678</span>
+                  <span className="font-mono">n8n.elunari.uk</span>
                 </div>
               </div>
             )}
@@ -464,13 +464,13 @@ export default function AutomationsPage() {
                   <span className="text-sm font-medium">Connected</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-gray-400">
-                  <XCircle className="w-4 h-4" />
+                <div className="flex items-center gap-2 text-amber-400">
+                  <AlertTriangle className="w-4 h-4" />
                   <span className="text-sm font-medium">Offline</span>
                 </div>
               )}
             </div>
-            {elevenLabsStatus?.connected && elevenLabsStatus.usage && (
+            {elevenLabsStatus?.connected && elevenLabsStatus.usage ? (
               <div className="space-y-1">
                 <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
                   <span>Characters Used</span>
@@ -494,10 +494,24 @@ export default function AutomationsPage() {
                   </div>
                 </div>
               </div>
+            ) : (
+              <div className="space-y-1">
+                <p className={cn("text-xs leading-relaxed", isDark ? "text-gray-500" : "text-gray-400")}>
+                  ElevenLabs API is not reachable. Voice generation in WF2 will be skipped.
+                </p>
+                <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
+                  <span>Service</span>
+                  <span className="font-mono">Voice AI (TTS)</span>
+                </div>
+                <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
+                  <span>Status</span>
+                  <span className="font-mono text-amber-400">Check API key / network</span>
+                </div>
+              </div>
             )}
           </motion.div>
 
-          {/* AirTable Integration */}
+          {/* NocoDB CRM */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -505,20 +519,20 @@ export default function AutomationsPage() {
             className={cn("rounded-xl border p-4", isDark ? "bg-white/[0.02] border-white/5" : "bg-white border-gray-200")}
           >
             <div className="flex items-center justify-between mb-2">
-              <h2 className={cn("text-base font-semibold", isDark ? "text-white" : "text-gray-900")}>AirTable</h2>
+              <h2 className={cn("text-base font-semibold", isDark ? "text-white" : "text-gray-900")}>NocoDB</h2>
               {airTableStatus?.success ? (
                 <div className="flex items-center gap-2 text-emerald-400">
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <span className="text-sm font-medium">Connected</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-gray-400">
-                  <XCircle className="w-4 h-4" />
+                <div className="flex items-center gap-2 text-amber-400">
+                  <AlertTriangle className="w-4 h-4" />
                   <span className="text-sm font-medium">Offline</span>
                 </div>
               )}
             </div>
-            {airTableStatus?.success && (
+            {airTableStatus?.success ? (
               <div className="space-y-1">
                 <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
                   <span>Records</span>
@@ -529,8 +543,28 @@ export default function AutomationsPage() {
                   <span className="font-mono">Candidates</span>
                 </div>
                 <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
-                  <span>Base</span>
-                  <span className="font-mono">TalentFlow</span>
+                  <span>Host</span>
+                  <span className="font-mono">db.elunari.uk</span>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className={cn("text-xs leading-relaxed", isDark ? "text-gray-500" : "text-gray-400")}>
+                  NocoDB is not reachable. Candidate sync (WF3) will queue locally until reconnected.
+                </p>
+                <div className="space-y-1">
+                  <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
+                    <span>Table</span>
+                    <span className="font-mono">Candidates</span>
+                  </div>
+                  <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
+                    <span>Host</span>
+                    <span className="font-mono">db.elunari.uk</span>
+                  </div>
+                  <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
+                    <span>Status</span>
+                    <span className="font-mono text-amber-400">Check server / tunnel</span>
+                  </div>
                 </div>
               </div>
             )}
@@ -540,6 +574,39 @@ export default function AutomationsPage() {
         {/* Workflow Cards */}
         <div>
           <h2 className={cn("text-xl font-bold mb-4", isDark ? "text-white" : "text-gray-900")}>Workflows</h2>
+          {(!n8nStatus?.workflows || n8nStatus.workflows.length === 0) && !loading ? (
+            <div className={cn("rounded-2xl border p-8 text-center", isDark ? "bg-white/[0.02] border-white/5" : "bg-white border-gray-200")}>
+              <Workflow className={cn("w-10 h-10 mx-auto mb-3", isDark ? "text-gray-600" : "text-gray-300")} />
+              <h3 className={cn("font-semibold mb-1", isDark ? "text-gray-300" : "text-gray-700")}>
+                {n8nStatus?.connected ? "No workflows found" : "n8n is offline"}
+              </h3>
+              <p className={cn("text-sm max-w-md mx-auto", isDark ? "text-gray-500" : "text-gray-400")}>
+                {n8nStatus?.connected
+                  ? "Create workflows in the n8n editor to see them here."
+                  : "Start n8n on the server (n8n.elunari.uk) to view and test workflows. All 5 automation modules will appear once connected."}
+              </p>
+              {/* Show expected workflows as disabled previews */}
+              {!n8nStatus?.connected && (
+                <div className="grid grid-cols-1 gap-3 mt-6 max-w-lg mx-auto text-left">
+                  {Object.entries(WORKFLOW_META).map(([name, meta]) => {
+                    const Icon = meta.icon;
+                    return (
+                      <div key={name} className={cn("flex items-center gap-3 rounded-xl border p-3 opacity-50", isDark ? "border-white/5 bg-white/[0.01]" : "border-gray-100 bg-gray-50")}>
+                        <div className={cn("p-2 rounded-lg", meta.bg)}>
+                          <Icon className={cn("w-4 h-4", meta.color)} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className={cn("text-sm font-medium truncate", isDark ? "text-gray-300" : "text-gray-700")}>{name}</div>
+                          <div className={cn("text-xs truncate", isDark ? "text-gray-500" : "text-gray-400")}>{meta.description}</div>
+                        </div>
+                        <span className={cn("px-2 py-0.5 rounded-full text-xs", isDark ? "bg-gray-800 text-gray-500" : "bg-gray-200 text-gray-400")}>Offline</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
           <div className="grid grid-cols-1 gap-4">
             {n8nStatus?.workflows.map((wf, i) => {
               const meta = WORKFLOW_META[wf.name] || {
@@ -595,7 +662,7 @@ export default function AutomationsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <a
-                        href={`http://localhost:5678/workflow/${wf.id}`}
+                        href={`https://n8n.elunari.uk/workflow/${wf.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={cn("p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100", isDark ? "hover:bg-white/5 text-gray-400" : "hover:bg-gray-100 text-gray-600")}
@@ -659,6 +726,7 @@ export default function AutomationsPage() {
               );
             })}
           </div>
+          )}
         </div>
 
         {/* Outreach Result */}
@@ -751,7 +819,7 @@ export default function AutomationsPage() {
               <h3 className={cn("text-lg font-semibold mb-4 flex items-center gap-2", isDark ? "text-white" : "text-gray-900")}>
                 <Database className="w-5 h-5 text-cyan-400" /> Synced Record
                 {syncResult.airtable?.success && (
-                  <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-500/10 text-emerald-400">AirTable Synced</span>
+                  <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-500/10 text-emerald-400">NocoDB Synced</span>
                 )}
                 {syncResult.n8n?.connected && (
                   <span className="px-2 py-0.5 rounded-full text-xs bg-purple-500/10 text-purple-400">n8n Notified</span>
@@ -760,7 +828,7 @@ export default function AutomationsPage() {
               {syncResult.airtable?.recordId && (
                 <div className={cn("flex items-center gap-2 mb-3 text-sm", isDark ? "text-gray-400" : "text-gray-500")}>
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  AirTable Record ID: <span className="font-mono text-cyan-400">{syncResult.airtable.recordId}</span>
+                  NocoDB Record ID: <span className="font-mono text-cyan-400">{syncResult.airtable.recordId}</span>
                 </div>
               )}
               <div className={cn("rounded-xl p-4 font-mono text-xs overflow-auto max-h-60", isDark ? "bg-black/40 text-gray-300" : "bg-gray-50 text-gray-700")}>

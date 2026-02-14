@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Push to AirTable as a raw application
+    // Push to NocoDB as a raw application
     const { pushToAirTable } = await import("@/lib/airtable");
     const airtableResult = await pushToAirTable({
       name,
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       jobTitle: position,
       model: "candidate-submitted",
       processedAt: new Date().toISOString(),
-    }).catch(() => ({ success: false, error: "AirTable unavailable" }));
+    }).catch(() => ({ success: false, error: "NocoDB unavailable" }));
 
     // Fire n8n webhook for candidate intake (non-blocking)
     const { notifyCandidateProcessed } = await import("@/lib/n8n");
