@@ -136,15 +136,23 @@ export function buildOutreachHTML(
 
   // Voice message section
   const voiceSection = hasVoiceMessage
-    ? `<div style="background: linear-gradient(135deg, #faf5ff, #eff6ff); border: 1px solid #e9d5ff; border-radius: 12px; padding: 16px 20px; margin: 20px 0; display: flex; align-items: center; gap: 12px;">
-        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #8b5cf6, #3b82f6); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-          <span style="font-size: 18px;">&#127908;</span>
-        </div>
-        <div>
-          <p style="margin: 0; font-weight: 600; color: #1f2937; font-size: 14px;">Personal Voice Message Attached</p>
-          <p style="margin: 4px 0 0; color: #6b7280; font-size: 13px;">We recorded a quick personal message just for you, ${firstName}. Check the attachment!</p>
-        </div>
-      </div>`
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff, #eff6ff); border: 1px solid #e9d5ff; border-radius: 12px; margin: 20px 0;">
+        <tr>
+          <td style="padding: 16px 20px;">
+            <table role="presentation" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="width: 40px; height: 40px; background: linear-gradient(135deg, #8b5cf6, #3b82f6); border-radius: 50%; text-align: center; vertical-align: middle; padding: 0;">
+                  <span style="display: inline-block; font-size: 18px; line-height: 40px;">&#127908;</span>
+                </td>
+                <td style="padding-left: 12px; vertical-align: middle;">
+                  <p style="margin: 0; font-weight: 600; color: #1f2937; font-size: 14px;">Personal Voice Message Attached</p>
+                  <p style="margin: 4px 0 0; color: #6b7280; font-size: 13px;">We recorded a quick personal message just for you, ${firstName}. Check the attachment!</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>`
     : "";
 
   return `<!DOCTYPE html>
