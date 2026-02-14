@@ -119,8 +119,37 @@ export async function POST(request: NextRequest) {
     let emailSent: { success: boolean; messageId?: string; error?: string } = { success: false };
     if (generatedEmail && candidateEmail && candidateEmail.includes("@") && isEmailConfigured()) {
       const subject = `${jobTitle || "Exciting opportunity"} at ${companyName || "WeAssist"} - ${candidateName}`;
-      const html = buildOutreachHTML(generatedEmail, candidateName);
-      emailSent = await sendEmail({ to: candidateEmail, subject, html, text: generatedEmail });
+      const html = buildOutreachHTML(generatedEmail, candidateName, {
+        score: overallScore || undefined,
+        jobTitle: jobTitle || "Open Position",
+        companyName: companyName || "WeAssist",
+        hasVoiceMessage: tts.success && Boolean(tts.audioBase64),
+        strengths: strengths || [],
+      });
+
+      // Build attachments (Kokoro voice message if available)
+      const attachments: { filename: string; content: Buffer; contentType?: string }[] = [];
+      if (tts.success && tts.audioBase64) {
+        try {
+          const audioBuffer = Buffer.from(tts.audioBase64, "base64");
+          const ext = tts.contentType?.includes("mp3") ? "mp3" : "wav";
+          attachments.push({
+            filename: `voice-message-${candidateName.replace(/\s+/g, "-").toLowerCase()}.${ext}`,
+            content: audioBuffer,
+            contentType: tts.contentType || "audio/wav",
+          });
+        } catch (e) {
+          console.warn("[Outreach] Failed to attach voice audio:", e instanceof Error ? e.message : e);
+        }
+      }
+
+      emailSent = await sendEmail({
+        to: candidateEmail,
+        subject,
+        html,
+        text: generatedEmail,
+        attachments: attachments.length > 0 ? attachments : undefined,
+      });
     }
 
     return NextResponse.json({
