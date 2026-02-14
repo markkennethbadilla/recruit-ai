@@ -493,8 +493,8 @@ export default function AutomationsPage() {
                   <span className="font-mono text-cyan-400">Kokoro-82M</span>
                 </div>
                 <div className={cn("flex justify-between text-xs", isDark ? "text-gray-400" : "text-gray-500")}>
-                  <span>Cost</span>
-                  <span className="font-mono text-emerald-400">Free (self-hosted)</span>
+                  <span>Host</span>
+                  <span className="font-mono text-emerald-400">tts.elunari.uk</span>
                 </div>
               </div>
             ) : (

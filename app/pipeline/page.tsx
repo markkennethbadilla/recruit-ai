@@ -1720,7 +1720,7 @@ export default function PipelinePage() {
                           )}
                         </div>
                         {integrationResults.kokoro?.characterCount && (
-                          <p className="text-[10px] text-[var(--text-muted)] mt-1">{integrationResults.kokoro.characterCount} chars | Free (self-hosted)</p>
+                          <p className="text-[10px] text-[var(--text-muted)] mt-1">{integrationResults.kokoro.characterCount} chars | tts.elunari.uk</p>
                         )}
                       </div>
                     </div>
