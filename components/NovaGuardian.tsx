@@ -92,7 +92,10 @@ const PERSONALITY =
   `You are ${NAME}, TalentFlow's guardian AI spirit. Personality: warm, direct, genuinely helpful — ` +
   `like a brilliant senior recruiter who truly cares. Speak concisely (under 120 words usually). ` +
   `Give opinionated, concrete next-step advice. Celebrate wins. Admit uncertainty honestly. ` +
-  `Light personality but never forced. You know every feature, endpoint, and workflow intimately.`;
+  `Light personality but never forced. You know every feature, endpoint, and workflow intimately. ` +
+  `SCOPE: You ONLY discuss TalentFlow, recruiting, hiring, and the platform. ` +
+  `If asked about unrelated topics (politics, celebrities, general knowledge, coding help, etc.), ` +
+  `politely decline: "I'm here to help with TalentFlow and recruiting! Ask me about the pipeline, scoring, automations, or any feature."`;
 const STORAGE_KEY = "nova-guardian-v2";
 const TIP_SHOWN_KEY = "nova-tip-shown";
 
@@ -455,6 +458,31 @@ export default function NovaGuardian() {
     });
   }, [messages, loading]);
 
+  /* ── off-topic filter (saves tokens by not calling API) ── */
+  const OFF_TOPIC_REFUSAL =
+    "I'm Nova, TalentFlow's assistant! I can only help with recruiting, hiring, and platform features. Try asking about the pipeline, candidate scoring, automations, or any TalentFlow feature!";
+
+  const isOnTopic = useCallback((text: string): boolean => {
+    const lower = text.toLowerCase();
+    // Keywords that indicate TalentFlow/recruiting relevance
+    const onTopicKeywords = [
+      "recruit", "hiring", "candidate", "resume", "job", "pipeline", "score",
+      "interview", "talent", "apply", "application", "position", "role",
+      "automat", "workflow", "outreach", "email", "nova", "guide", "feature",
+      "help", "how", "what", "where", "setting", "config", "dashboard",
+      "ethics", "ai", "bias", "fair", "screen", "evaluat", "assess",
+      "question", "generate", "template", "crm", "n8n", "nocodb",
+      "talentflow", "platform", "tool", "tip", "start", "setup",
+      "integrat", "connect", "webhook", "api", "demo", "pricing",
+      "plan", "trial", "account", "password", "login", "sign",
+      "thank", "thanks", "hello", "hi", "hey", "good", "great",
+      "yes", "no", "ok", "sure", "please", "sorry",
+    ];
+    // Short messages (greetings, confirmations) are always on-topic
+    if (lower.split(/\s+/).length <= 3) return true;
+    return onTopicKeywords.some((kw) => lower.includes(kw));
+  }, []);
+
   /* ── send message ── */
   const send = useCallback(
     async (text?: string) => {
@@ -466,6 +494,18 @@ export default function NovaGuardian() {
       setInput("");
       setLoading(true);
       setMood("thinking");
+
+      // Client-side off-topic filter to save API tokens
+      if (!isOnTopic(msg)) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "nova", content: OFF_TOPIC_REFUSAL, ts: Date.now() },
+        ]);
+        setMood("speaking");
+        setTimeout(() => setMood("idle"), 2500);
+        setLoading(false);
+        return;
+      }
 
       try {
         const history = [...messages, userMsg]
@@ -509,7 +549,7 @@ export default function NovaGuardian() {
         setLoading(false);
       }
     },
-    [input, loading, messages, liveCtx]
+    [input, loading, messages, liveCtx, isOnTopic]
   );
 
   /* ── contextual quick prompts ── */
@@ -623,10 +663,9 @@ export default function NovaGuardian() {
             transition={{ type: "spring", stiffness: 400, damping: 28 }}
             className={cn(
               "px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide select-none cursor-pointer",
-              "bg-gradient-to-r from-purple-600/15 to-cyan-600/15 border",
               isDark
-                ? "border-purple-500/20 text-purple-300"
-                : "border-purple-200/60 text-purple-600"
+                ? "bg-[#1a1b2e] border border-purple-500/40 text-purple-300"
+                : "bg-white border border-purple-200 text-purple-600"
             )}
             onClick={() => setOpen(true)}
           >
@@ -646,8 +685,8 @@ export default function NovaGuardian() {
               "relative px-4 py-3 rounded-2xl text-[13px] leading-relaxed cursor-pointer",
               isMobile ? "max-w-[280px] rounded-br-lg" : "max-w-[260px] rounded-br-md",
               isDark
-                ? "bg-[#13141f]/95 border border-purple-500/20 text-gray-300 shadow-xl shadow-purple-500/10"
-                : "bg-white/95 border border-purple-200/60 text-gray-600 shadow-xl shadow-purple-100/40"
+                ? "bg-[#13141f] border border-purple-500/30 text-gray-300 shadow-xl shadow-purple-500/10"
+                : "bg-white border border-purple-200 text-gray-600 shadow-xl shadow-purple-100/40"
             )}
             style={{ backdropFilter: "blur(8px)" }}
             onClick={() => {
@@ -705,8 +744,8 @@ export default function NovaGuardian() {
                 ? "w-[calc(100vw-24px)] rounded-br-lg"
                 : "w-[380px] rounded-br-md",
               isDark
-                ? "bg-[#0a0d17]/97 border-purple-500/15 shadow-2xl shadow-purple-900/20"
-                : "bg-white/97 border-purple-200/40 shadow-2xl shadow-purple-100/30"
+                ? "bg-[#0a0d17] border-purple-500/25 shadow-2xl shadow-purple-900/20"
+                : "bg-white border-purple-200/60 shadow-2xl shadow-purple-100/30"
             )}
             style={{
               backdropFilter: "blur(8px)",
@@ -874,8 +913,8 @@ export default function NovaGuardian() {
                       m.role === "user"
                         ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white rounded-br-sm whitespace-pre-wrap"
                         : isDark
-                          ? "bg-white/[0.04] border border-white/8 text-gray-200 rounded-bl-sm"
-                          : "bg-purple-50/60 border border-purple-100/60 text-gray-800 rounded-bl-sm"
+                          ? "bg-[#1a1b2e] border border-white/15 text-gray-200 rounded-bl-sm"
+                          : "bg-purple-50 border border-purple-100 text-gray-800 rounded-bl-sm"
                     )}
                   >
                     {m.role === "nova" ? renderMarkdown(m.content) : m.content}
@@ -1053,7 +1092,7 @@ export default function NovaGuardian() {
                 className={cn(
                   "flex-1 text-sm rounded-xl px-3 py-2.5 border outline-none transition-all",
                   isDark
-                    ? "bg-white/[0.03] border-white/10 text-white placeholder:text-gray-600 focus:border-purple-500/40 focus:bg-white/[0.05]"
+                    ? "bg-[#12131f] border-white/15 text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:bg-[#151627]"
                     : "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-purple-300 focus:bg-white"
                 )}
               />
