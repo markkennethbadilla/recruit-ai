@@ -35,14 +35,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Server-side file size validation (10MB max)
+    if (resume.size > 10 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: "Resume file is too large. Maximum size is 10MB." },
+        { status: 400 }
+      );
+    }
+
     // Extract resume text
     let resumeText = "";
     const buffer = Buffer.from(await resume.arrayBuffer());
 
     if (resume.name.endsWith(".pdf")) {
-      const pdfParse = (await import("pdf-parse/lib/pdf-parse.js")).default;
-      const data = await pdfParse(buffer);
-      resumeText = data.text;
+      try {
+        const pdfParse = (await import("pdf-parse/lib/pdf-parse.js")).default;
+        const data = await pdfParse(buffer);
+        resumeText = data.text;
+      } catch (pdfErr) {
+        console.warn("[Apply] PDF parse failed:", pdfErr instanceof Error ? pdfErr.message : pdfErr);
+        return NextResponse.json(
+          { error: "Could not read your PDF. The file may be corrupted, encrypted, or password-protected. Please try a plain text (.txt) version." },
+          { status: 400 }
+        );
+      }
     } else {
       resumeText = buffer.toString("utf-8");
     }

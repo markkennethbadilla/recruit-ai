@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findCachedAnswer } from "@/lib/semantic-cache";
 import { callOpenRouter } from "@/lib/openrouter";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 const SYSTEM_PROMPT = `You are the TalentFlow AI Guide Assistant. You help users understand and use the TalentFlow AI Recruiting Platform.
 
@@ -18,6 +19,11 @@ Key facts about TalentFlow:
 Be concise, helpful, and specific. Use markdown formatting. Keep answers under 200 words unless the user asks for detail.`;
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 20 chat messages per minute per IP
+  const ip = getClientIp(req.headers);
+  const rl = checkRateLimit(`chat:${ip}`, 20);
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
+
   try {
     const body = await req.json();
     const { message, route, contextSummary, history } = body;

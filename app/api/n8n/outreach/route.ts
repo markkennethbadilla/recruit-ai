@@ -3,6 +3,7 @@ import { generateOutreach } from "@/lib/n8n";
 import { generateOutreachAudio, getUsageInfo } from "@/lib/kokoro";
 import { callOpenRouter } from "@/lib/openrouter";
 import { sendEmail, isEmailConfigured, buildOutreachHTML } from "@/lib/email";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 /**
  * Build a human-sounding email prompt for LLM-powered outreach.
@@ -40,6 +41,11 @@ function buildEmailPrompt(params: {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 outreach sends per minute per IP
+  const ip = getClientIp(request.headers);
+  const rl = checkRateLimit(`outreach:${ip}`, 5);
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
+
   try {
     const body = await request.json();
     const { candidateName, candidateEmail, overallScore, strengths, gaps, jobTitle, companyName } = body;

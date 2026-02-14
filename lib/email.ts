@@ -11,6 +11,16 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 const FROM_EMAIL = "recruiting@talentflow.elunari.uk";
 const FROM_NAME = "TalentFlow AI";
 
+/** Escape HTML special characters to prevent injection */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 interface Attachment {
   filename: string;
   content: Buffer;
@@ -93,16 +103,21 @@ export function buildOutreachHTML(
   }
 ): string {
   const { score, jobTitle, companyName, hasVoiceMessage, strengths } = options || {};
-  const firstName = candidateName.split(" ")[0];
 
-  // Convert line breaks to paragraphs
+  // Sanitize all user-supplied strings to prevent HTML injection
+  const safeName = escapeHtml(candidateName);
+  const firstName = escapeHtml(candidateName.split(" ")[0]);
+  const safeJobTitle = escapeHtml(jobTitle || "Position");
+  const safeCompanyName = escapeHtml(companyName || "WeAssist");
+
+  // Convert line breaks to paragraphs (sanitize email body content)
   const paragraphs = emailBody
     .split(/\n\n+/)
     .map((p) => p.trim())
     .filter(Boolean)
     .map(
       (p) =>
-        `<p style="margin: 0 0 14px 0; line-height: 1.7; color: #374151; font-size: 15px;">${p.replace(/\n/g, "<br>")}</p>`
+        `<p style="margin: 0 0 14px 0; line-height: 1.7; color: #374151; font-size: 15px;">${escapeHtml(p).replace(/\n/g, "<br>")}</p>`
     )
     .join("");
 
@@ -128,7 +143,7 @@ export function buildOutreachHTML(
             .slice(0, 4)
             .map(
               (s) =>
-                `<span style="display: inline-block; background: linear-gradient(135deg, #ede9fe, #dbeafe); color: #5b21b6; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">${s}</span>`
+                `<span style="display: inline-block; background: linear-gradient(135deg, #ede9fe, #dbeafe); color: #5b21b6; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">${escapeHtml(s)}</span>`
             )
             .join("")}
         </div>`
@@ -161,7 +176,7 @@ export function buildOutreachHTML(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>${jobTitle || "Opportunity"} at ${companyName || "WeAssist"}</title>
+  <title>${safeJobTitle} at ${safeCompanyName}</title>
   <!--[if mso]>
   <noscript>
     <xml>
@@ -206,7 +221,7 @@ export function buildOutreachHTML(
                         </td>
                         <td>
                           <p style="margin: 0; font-size: 13px; font-weight: 600; color: #ffffff;">${scoreLabel}</p>
-                          <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.7);">${jobTitle || "Position"} fit score</p>
+                          <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.7);">${safeJobTitle} fit score</p>
                         </td>
                       </tr>
                     </table>

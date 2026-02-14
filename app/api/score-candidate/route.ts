@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callOpenRouter } from "@/lib/openrouter";
+import { extractJSON } from "@/lib/extract-json";
 import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
@@ -91,12 +92,7 @@ Be thorough and fair in your assessment. Consider both explicit matches and tran
       model || "meta-llama/llama-3.3-70b-instruct:free"
     );
 
-    let cleaned = result
-      .replace(/```json\n?/g, "")
-      .replace(/```\n?/g, "")
-      .trim();
-
-    const scoring = JSON.parse(cleaned);
+    const scoring = extractJSON<Record<string, unknown>>(result);
 
     return NextResponse.json({ scoring });
   } catch (error: unknown) {

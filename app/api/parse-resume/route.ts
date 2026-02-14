@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callOpenRouter } from "@/lib/openrouter";
+import { extractJSON } from "@/lib/extract-json";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 10 parses per minute per IP
+  const ip = getClientIp(request.headers);
+  const rl = checkRateLimit(`parse:${ip}`, 10);
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
+
   try {
     const formData = await request.formData();
     const file = formData.get("resume") as File;
@@ -11,18 +18,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
+    // Server-side file size validation (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: "File is too large. Maximum size is 10MB." },
+        { status: 400 }
+      );
+    }
+
     // Extract text from file
     let text = "";
     let pdfMailtoEmails: string[] = [];
     const buffer = Buffer.from(await file.arrayBuffer());
 
     if (file.name.endsWith(".pdf")) {
-      // Import the core parser directly to avoid pdf-parse's test file auto-load
-      // pdf-parse/index.js tries to read ./test/data/05-versions-space.pdf in debug mode
-      // which fails on serverless (Vercel). Importing lib/pdf-parse.js directly bypasses this.
-      const pdfParse = (await import("pdf-parse/lib/pdf-parse.js")).default;
-      const data = await pdfParse(buffer);
-      text = data.text;
+      try {
+        // Import the core parser directly to avoid pdf-parse's test file auto-load
+        // pdf-parse/index.js tries to read ./test/data/05-versions-space.pdf in debug mode
+        // which fails on serverless (Vercel). Importing lib/pdf-parse.js directly bypasses this.
+        const pdfParse = (await import("pdf-parse/lib/pdf-parse.js")).default;
+        const data = await pdfParse(buffer);
+        text = data.text;
+      } catch (pdfErr) {
+        console.warn("[Parse] PDF parse failed:", pdfErr instanceof Error ? pdfErr.message : pdfErr);
+        return NextResponse.json(
+          { error: "Could not read your PDF. The file may be corrupted, encrypted, or password-protected. Try uploading a .txt version instead." },
+          { status: 400 }
+        );
+      }
 
       // Extract mailto links from raw PDF bytes (PDF stores URI annotations as plain text)
       // This avoids needing pdfjs-dist which has bundler issues on Vercel
@@ -85,13 +108,8 @@ If a field is not found in the resume, use empty string or empty array. For the 
       model
     );
 
-    // Clean the response - remove markdown code blocks if present
-    let cleaned = result
-      .replace(/```json\n?/g, "")
-      .replace(/```\n?/g, "")
-      .trim();
-
-    const parsed = JSON.parse(cleaned);
+    // Robustly extract JSON from LLM response (handles fences, leading text, etc.)
+    const parsed = extractJSON<Record<string, unknown>>(result);
 
     // Validate email: LLMs sometimes return the literal label "Email" or
     // other non-email strings instead of an actual address.

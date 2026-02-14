@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callOpenRouter } from "@/lib/openrouter";
+import { extractJSON } from "@/lib/extract-json";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 10 question generations per minute per IP
+  const ip = getClientIp(request.headers);
+  const rl = checkRateLimit(`questions:${ip}`, 10);
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
+
   try {
     const { parsedResume, jobDescription, scoringResult, model } = await request.json();
 
@@ -58,12 +65,8 @@ ${scoringResult ? `SCORING RESULTS:\n${JSON.stringify(scoringResult, null, 2)}` 
       model || "meta-llama/llama-3.3-70b-instruct:free"
     );
 
-    let cleaned = result
-      .replace(/```json\n?/g, "")
-      .replace(/```\n?/g, "")
-      .trim();
-
-    const { questions } = JSON.parse(cleaned);
+    const parsed = extractJSON<{ questions: unknown[] }>(result);
+    const questions = parsed.questions || [];
 
     return NextResponse.json({ questions });
   } catch (error: unknown) {
