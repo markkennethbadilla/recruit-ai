@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateOutreach } from "@/lib/n8n";
 import { generateOutreachAudio, getUsageInfo } from "@/lib/kokoro";
+import { callOpenRouter } from "@/lib/openrouter";
+import { sendEmail, isEmailConfigured, buildOutreachHTML } from "@/lib/email";
 
 /**
  * Build a human-sounding email prompt for LLM-powered outreach.
@@ -98,9 +100,34 @@ export async function POST(request: NextRequest) {
     const n8nEmailPrompt = n8n.success ? (n8n as { data?: { emailPrompt?: string } }).data?.emailPrompt || "" : "";
     const toneLabel = "warm and genuine";
 
+    // Generate actual email text via LLM
+    let generatedEmail = "";
+    try {
+      generatedEmail = await callOpenRouter(
+        [
+          { role: "system", content: "You are a friendly tech recruiter writing outreach emails. Write naturally, like you're texting a colleague about someone cool. Output ONLY the email body text. No subject line, no headers, no metadata." },
+          { role: "user", content: localEmailPrompt },
+        ],
+        "auto",
+        0.7
+      );
+    } catch (e) {
+      console.warn("[Outreach] Email generation failed:", e instanceof Error ? e.message : e);
+    }
+
+    // Send the email if we have a valid recipient and generated content
+    let emailSent: { success: boolean; messageId?: string; error?: string } = { success: false };
+    if (generatedEmail && candidateEmail && candidateEmail.includes("@") && isEmailConfigured()) {
+      const subject = `${jobTitle || "Exciting opportunity"} at ${companyName || "WeAssist"} - ${candidateName}`;
+      const html = buildOutreachHTML(generatedEmail, candidateName);
+      emailSent = await sendEmail({ to: candidateEmail, subject, html, text: generatedEmail });
+    }
+
     return NextResponse.json({
-      success: n8n.success || tts.success,
-      emailPrompt: localEmailPrompt, // always use anti-AI compliant prompt
+      success: n8n.success || tts.success || Boolean(generatedEmail),
+      emailPrompt: localEmailPrompt,
+      emailBody: generatedEmail, // actual generated email text
+      emailSent, // delivery status
       voiceScript: tts.script || (n8n.success ? (n8n as { data?: { voiceScript?: string } }).data?.voiceScript || "" : ""),
       tone: toneLabel,
       // Kokoro TTS audio

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDropzone } from "react-dropzone";
 import Link from "next/link";
@@ -194,8 +194,10 @@ interface IntegrationResults {
   airtable: { success: boolean; recordId?: string; error?: string } | null;
   n8n: { connected: boolean; outreach?: boolean } | null;
   kokoro: { success: boolean; audioBase64?: string; contentType?: string; characterCount?: number; charsRemaining?: number } | null;
+  email: { success: boolean; messageId?: string; error?: string } | null;
   voiceScript?: string;
   emailPrompt?: string;
+  emailBody?: string;
   tone?: string;
 }
 
@@ -213,6 +215,7 @@ export default function PipelinePage() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [autoPilot, setAutoPilot] = useState(false);
   const [autoPilotStatus, setAutoPilotStatus] = useState("");
+  const abortRef = useRef<AbortController | null>(null);
   const [copied, setCopied] = useState(false);
   const [integrationResults, setIntegrationResults] = useState<IntegrationResults | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -397,6 +400,7 @@ export default function PipelinePage() {
   }
 
   function resetPipeline() {
+    if (abortRef.current) { abortRef.current.abort(); abortRef.current = null; }
     setFile(null);
     setParsedResume(null);
     setScoring(null);
@@ -409,9 +413,47 @@ export default function PipelinePage() {
     if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
   }
 
+  // Cancel autopilot entirely
+  function cancelAutoPilot() {
+    if (abortRef.current) { abortRef.current.abort(); abortRef.current = null; }
+    setAutoPilot(false);
+    setAutoPilotStatus("");
+    // Keep whatever state we're at so the user can see progress
+    if (!parsedResume) {
+      setState({ step: "upload" });
+    } else if (!scoring) {
+      setState({ step: "parsed", parsedResume });
+    } else if (questions.length === 0) {
+      setState({ step: "scored", scoring, parsedResume });
+    } else {
+      setState({ step: "complete", screeningQuestions: questions, scoring, parsedResume });
+    }
+  }
+
+  // Cancel current step (go back one step)
+  function cancelStep() {
+    const step = state.step;
+    if (step === "parsing") {
+      setState({ step: "upload" });
+    } else if (step === "parsed" || step === "scoring") {
+      setState({ step: "upload" });
+      setParsedResume(null);
+    } else if (step === "scored" || step === "generating") {
+      setState({ step: "parsed", parsedResume: parsedResume! });
+      setScoring(null);
+    } else if (step === "complete") {
+      setState({ step: "scored", scoring: scoring!, parsedResume: parsedResume! });
+      setQuestions([]);
+    } else if (step === "summary") {
+      setState({ step: "complete", screeningQuestions: questions, scoring: scoring ?? undefined, parsedResume: parsedResume! });
+    }
+  }
+
   // Auto-pilot: run entire pipeline in one click
   async function handleFullPipeline() {
     if (!file || !jobDescription.trim()) return;
+    const controller = new AbortController();
+    abortRef.current = controller;
     setAutoPilot(true);
 
     try {
@@ -422,19 +464,21 @@ export default function PipelinePage() {
       const resolvedModel = resolveModel();
       formData.append("resume", file);
       formData.append("model", resolvedModel);
-      const parseRes = await fetch("/api/parse-resume", { method: "POST", body: formData });
+      const parseRes = await fetch("/api/parse-resume", { method: "POST", body: formData, signal: controller.signal });
       const parseData = await parseRes.json();
       if (!parseRes.ok) throw new Error(parseData.error);
       const parsed = parseData.parsed;
       setParsedResume(parsed);
 
       // Step 2: Score
+      if (controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
       setAutoPilotStatus("Scoring candidate fit...");
       setState({ step: "scoring", parsedResume: parsed, resumeText: parseData.rawText });
       const scoreRes = await fetch("/api/score-candidate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ parsedResume: parsed, jobDescription, model: resolvedModel }),
+        signal: controller.signal,
       });
       const scoreData = await scoreRes.json();
       if (!scoreRes.ok) throw new Error(scoreData.error);
@@ -442,17 +486,18 @@ export default function PipelinePage() {
       setScoring(scoringResult);
 
       // Step 3: Generate Questions
+      if (controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
       setAutoPilotStatus("Generating interview questions...");
       setState((s) => ({ ...s, step: "generating" }));
       const qRes = await fetch("/api/generate-questions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ parsedResume: parsed, jobDescription, scoringResult, model: resolvedModel }),
+        signal: controller.signal,
       });
       const qData = await qRes.json();
       if (!qRes.ok) throw new Error(qData.error);
       setQuestions(qData.questions);
-      setState({ step: "complete", screeningQuestions: qData.questions, scoring: scoringResult, parsedResume: parsed });
 
       // Save to history
       saveToHistory({
@@ -470,7 +515,7 @@ export default function PipelinePage() {
       refreshHistory();
 
       // Fire n8n + NocoDB + Kokoro integrations (AWAIT results for demo visibility)
-      setAutoPilotStatus("Syncing to NocoDB + generating voice outreach...");
+      setAutoPilotStatus("Syncing integrations...");
       const candidatePayload = {
         name: parsed.name,
         email: parsed.email,
@@ -523,8 +568,10 @@ export default function PipelinePage() {
           characterCount: outreachData.voiceAudio.characterCount,
           charsRemaining: outreachData.kokoroUsage?.remaining,
         } : { success: outreachData?.kokoroConnected || false },
+        email: outreachData?.emailSent || null,
         voiceScript: outreachData?.voiceScript,
         emailPrompt: outreachData?.emailPrompt,
+        emailBody: outreachData?.emailBody,
         tone: outreachData?.tone,
       };
       setIntegrationResults(results);
@@ -539,10 +586,17 @@ export default function PipelinePage() {
       }
 
       setAutoPilotStatus("Complete!");
+      // Autopilot done — go directly to summary
+      setState({ step: "summary", screeningQuestions: qData.questions, scoring: scoringResult, parsedResume: parsed });
     } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        // User cancelled — don't show error, cancelAutoPilot already handled state
+        return;
+      }
       const message = err instanceof Error ? err.message : "Pipeline failed";
       setState({ step: "upload", error: message });
     }
+    abortRef.current = null;
     setAutoPilot(false);
   }
 
@@ -994,8 +1048,16 @@ export default function PipelinePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              className="flex flex-col items-center"
             >
               <LoadingState message="Extracting candidate intelligence..." />
+              <button
+                onClick={cancelStep}
+                className="mt-2 flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 border border-white/10 hover:border-red-500/20 transition-all"
+              >
+                <X className="w-3.5 h-3.5" />
+                Cancel
+              </button>
             </motion.div>
           )}
 
@@ -1013,9 +1075,9 @@ export default function PipelinePage() {
                 <p className="text-[var(--text-secondary)]">Full pipeline executing automatically</p>
               </div>
               <div className="glass-card p-5 sm:p-6 space-y-4 sm:space-y-5 mb-6">
-                {["Parsing resume...", "Scoring candidate fit...", "Generating interview questions...", "Complete!"].map((label, i) => {
+                {["Parsing resume...", "Scoring candidate fit...", "Generating interview questions...", "Syncing integrations...", "Complete!"].map((label, i) => {
                   const isActive = autoPilotStatus === label;
-                  const isDone = ["Parsing resume...", "Scoring candidate fit...", "Generating interview questions...", "Complete!"].indexOf(autoPilotStatus) > i;
+                  const isDone = ["Parsing resume...", "Scoring candidate fit...", "Generating interview questions...", "Syncing integrations...", "Complete!"].indexOf(autoPilotStatus) > i;
                   return (
                     <div key={label} className="flex items-center gap-4">
                       <div className={cn(
@@ -1035,6 +1097,18 @@ export default function PipelinePage() {
                     </div>
                   );
                 })}
+                {/* Cancel Autopilot */}
+                {autoPilotStatus !== "Complete!" && (
+                  <div className="pt-2 border-t border-white/5">
+                    <button
+                      onClick={cancelAutoPilot}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/30 transition-all"
+                    >
+                      <X className="w-4 h-4" />
+                      Cancel Pipeline
+                    </button>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -1052,17 +1126,26 @@ export default function PipelinePage() {
               {/* Left: Parsed Resume */}
               <div className="glass-card overflow-hidden flex flex-col">
                 <div className="p-4 sm:p-6 border-b border-[var(--border)] bg-white/[0.02] flex justify-between items-center gap-2">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-500/20 rounded-lg text-purple-300">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-2 bg-purple-500/20 rounded-lg text-purple-300 shrink-0">
                       <User className="w-5 h-5" />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-[var(--text-primary)]">{parsedResume.name}</h3>
+                    <div className="min-w-0">
+                      <h3 className="text-lg font-bold text-[var(--text-primary)] truncate">{parsedResume.name}</h3>
                       <p className="text-xs text-[var(--text-muted)]">Candidate Profile</p>
                     </div>
                   </div>
-                  <div className="px-3 py-1 bg-green-500/10 text-green-400 text-xs font-medium rounded-full border border-green-500/20">
-                    Parsed Successfully
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="px-3 py-1 bg-green-500/10 text-green-400 text-xs font-medium rounded-full border border-green-500/20">
+                      Parsed Successfully
+                    </div>
+                    <button
+                      onClick={cancelStep}
+                      className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 transition-all"
+                      title="Back to upload"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
 
@@ -1234,8 +1317,15 @@ export default function PipelinePage() {
                 </div>
 
                 {state.step === "scoring" ? (
-                  <div className="glass-card p-8 flex items-center justify-center">
+                  <div className="glass-card p-8 flex flex-col items-center justify-center">
                     <LoadingState message="Calculating 6-axis fit score..." />
+                    <button
+                      onClick={cancelStep}
+                      className="mt-2 flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 border border-white/10 hover:border-red-500/20 transition-all"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      Cancel
+                    </button>
                   </div>
                 ) : (
                   <motion.button
@@ -1267,8 +1357,20 @@ export default function PipelinePage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.4 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+              className="space-y-4 sm:space-y-6"
             >
+              {/* Back button */}
+              <div className="flex items-center">
+                <button
+                  onClick={cancelStep}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-all"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Back to Resume</span>
+                  <span className="sm:hidden">Back</span>
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* Score overview - Large Card */}
               <div className="glass-card p-5 sm:p-6 md:p-8 flex flex-col items-center justify-center text-center relative overflow-hidden group">
                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent transition-opacity group-hover:from-purple-500/10" />
@@ -1392,8 +1494,15 @@ export default function PipelinePage() {
                 </div>
 
                 {state.step === "generating" ? (
-                  <div className="glass-card p-4">
+                  <div className="glass-card p-4 flex flex-col items-center">
                      <LoadingState message="Drafting interview guide..." />
+                     <button
+                       onClick={cancelStep}
+                       className="mt-2 flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 border border-white/10 hover:border-red-500/20 transition-all"
+                     >
+                       <X className="w-3.5 h-3.5" />
+                       Cancel
+                     </button>
                   </div>
                 ) : (
                   <div className="space-y-3 mt-auto">
@@ -1416,6 +1525,7 @@ export default function PipelinePage() {
                   </div>
                 )}
               </div>
+              </div>
             </motion.div>
           )}
 
@@ -1427,6 +1537,16 @@ export default function PipelinePage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="max-w-4xl mx-auto"
               >
+                <div className="flex items-center justify-between mb-2">
+                  <button
+                    onClick={cancelStep}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-all"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Back to Score</span>
+                    <span className="sm:hidden">Back</span>
+                  </button>
+                </div>
                 <div className="text-center mb-4 sm:mb-5">
                   <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2">Tailored Interview Guide</h2>
                   <p className="text-[var(--text-secondary)] text-sm sm:text-base">Based on the candidate's specific profile and gaps.</p>
@@ -1723,10 +1843,36 @@ export default function PipelinePage() {
                           <p className="text-[10px] text-[var(--text-muted)] mt-1">{integrationResults.kokoro.characterCount} chars | tts.elunari.uk</p>
                         )}
                       </div>
+
+                      {/* Email Delivery Status */}
+                      <div className={cn(
+                        "glass-card p-4 border-l-2",
+                        integrationResults.email?.success ? "border-l-green-500" : integrationResults.emailBody ? "border-l-amber-500" : "border-l-gray-500"
+                      )}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Mail className="w-4 h-4 text-green-400" />
+                          <span className="text-sm font-semibold text-[var(--text-primary)]">Email Outreach</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {integrationResults.email?.success ? (
+                            <><CheckCircle2 className="w-3 h-3 text-green-400" /><span className="text-xs text-green-400">Sent</span></>
+                          ) : integrationResults.emailBody ? (
+                            <><AlertCircle className="w-3 h-3 text-amber-400" /><span className="text-xs text-amber-400">Generated (not sent)</span></>
+                          ) : (
+                            <><AlertCircle className="w-3 h-3 text-gray-500" /><span className="text-xs text-gray-400">Not configured</span></>
+                          )}
+                        </div>
+                        {integrationResults.email?.messageId && (
+                          <p className="text-[10px] text-[var(--text-muted)] mt-1 font-mono truncate">ID: {integrationResults.email.messageId}</p>
+                        )}
+                        {integrationResults.email?.error && (
+                          <p className="text-[10px] text-amber-400 mt-1">{integrationResults.email.error}</p>
+                        )}
+                      </div>
                     </div>
 
                     {/* Voice Outreach Card */}
-                    {(integrationResults.voiceScript || integrationResults.emailPrompt) && (
+                    {(integrationResults.voiceScript || integrationResults.emailBody || integrationResults.emailPrompt) && (
                       <div className="glass-card p-5 sm:p-6">
                         <div className="flex items-center gap-2 mb-4">
                           <Zap className="w-4 h-4 text-orange-400" />
@@ -1737,8 +1883,18 @@ export default function PipelinePage() {
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {/* Email Prompt */}
-                          {integrationResults.emailPrompt && (
+                          {/* Generated Email */}
+                          {integrationResults.emailBody ? (
+                            <div>
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <Mail className="w-3 h-3 text-purple-400" />
+                                <span className="text-xs font-medium text-[var(--text-muted)]">Email {integrationResults.email?.success ? "(Sent)" : "(Generated)"}</span>
+                              </div>
+                              <div className={cn("text-xs leading-relaxed p-3 rounded-lg max-h-40 overflow-auto whitespace-pre-wrap", theme === 'dark' ? "bg-black/30 text-gray-300" : "bg-gray-50 text-gray-600")}>
+                                {integrationResults.emailBody}
+                              </div>
+                            </div>
+                          ) : integrationResults.emailPrompt && (
                             <div>
                               <div className="flex items-center gap-1.5 mb-2">
                                 <Mail className="w-3 h-3 text-purple-400" />

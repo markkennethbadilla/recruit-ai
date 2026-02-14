@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 The JSON must follow this exact schema:
 {
   "name": "Full Name",
-  "email": "email@example.com",
+  "email": "actual_email@domain.com or empty string if not found",
   "phone": "phone number or empty string",
   "location": "City, Country or empty string",
   "summary": "2-3 sentence professional summary based on the resume",
@@ -65,7 +65,7 @@ The JSON must follow this exact schema:
   "certifications": ["cert1", "cert2"]
 }
 
-If a field is not found in the resume, use empty string or empty array. Extract as much detail as possible.`;
+If a field is not found in the resume, use empty string or empty array. For the email field, ONLY include actual email addresses containing @. If the resume does not contain an email address, use an empty string — never use the word "Email" as the value. Extract as much detail as possible.`;
 
     const result = await callOpenRouter(
       [
@@ -82,6 +82,15 @@ If a field is not found in the resume, use empty string or empty array. Extract 
       .trim();
 
     const parsed = JSON.parse(cleaned);
+
+    // Validate email: LLMs sometimes return the literal label "Email" or
+    // other non-email strings instead of an actual address.
+    if (parsed.email && typeof parsed.email === "string") {
+      const emailLike = parsed.email.trim();
+      if (!emailLike.includes("@") || /^email$/i.test(emailLike)) {
+        parsed.email = "";
+      }
+    }
 
     return NextResponse.json({
       parsed,
