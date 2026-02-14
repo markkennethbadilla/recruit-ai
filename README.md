@@ -23,7 +23,7 @@ AI-powered candidate screening pipeline with n8n workflow orchestration. Upload 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
 | **WF1: Candidate Intake** | Webhook (POST) | Routes candidates by score, builds Slack/email alerts |
-| **WF2: Smart Outreach** | Webhook (POST) | Generates personalized emails + ElevenLabs voice scripts |
+| **WF2: Smart Outreach** | Webhook (POST) | Generates personalized emails + Kokoro voice scripts |
 | **WF3: Data Sync** | Webhook (POST) | Pushes candidate data to NocoDB/CRM in flat records |
 | **WF4: Health Monitor** | Cron (5 min) | Checks /api/health, evaluates AI metrics, alerts on failure |
 | **WF5: Pipeline Report** | Webhook (POST) | Weekly analytics: top skills, gaps, qualification rates |
@@ -40,6 +40,7 @@ TalentFlow (Vercel)                   ThinkPad T480 (Ubuntu + Docker)
 | /api/n8n/report           | -----> | WF5: Pipeline Report       |
 | /automations              |        | n8n @ n8n.elunari.uk       |
 +---------------------------+        | NocoDB @ db.elunari.uk     |
+                                     | Kokoro TTS @ tts.elunari.uk|
                                      | PostgreSQL (shared DB)     |
                                      | Cloudflare Tunnel          |
                                      +----------------------------+
@@ -54,7 +55,8 @@ TalentFlow (Vercel)                   ThinkPad T480 (Ubuntu + Docker)
 - n8n (workflow orchestration, Docker on ThinkPad T480)
 - NocoDB (self-hosted CRM, replaces AirTable, Docker on T480)
 - PostgreSQL 16 (shared database for n8n + NocoDB, Docker on T480)
-- Cloudflare Tunnel (routes n8n.elunari.uk / db.elunari.uk)
+- Cloudflare Tunnel (routes n8n.elunari.uk / db.elunari.uk / tts.elunari.uk)
+- Kokoro-82M TTS (self-hosted voice AI, replaces ElevenLabs, Docker on T480)
 - Vercel (frontend hosting)
 - Cloudflare (DNS)
 - **Total monthly cost: $0** (self-hosted on spare hardware + free tiers)
@@ -104,6 +106,7 @@ NEXT_PUBLIC_N8N_URL=https://n8n.elunari.uk
 NOCODB_URL=https://db.elunari.uk  # NocoDB on server laptop
 NOCODB_API_TOKEN=...              # NocoDB API token
 NOCODB_TABLE_ID=...               # NocoDB table ID
+KOKORO_TTS_URL=https://tts.elunari.uk  # Kokoro TTS on server laptop
 ```
 
 Open [http://localhost:3003](http://localhost:3003).

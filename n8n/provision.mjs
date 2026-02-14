@@ -7,7 +7,7 @@
  * 
  * Workflows created:
  *   WF1: Candidate Intake Pipeline (webhook → route by score → notify)
- *   WF2: Smart Outreach (personalized email + optional ElevenLabs TTS)
+ *   WF2: Smart Outreach (personalized email + optional Kokoro TTS)
  *   WF3: AirTable Candidate Sync
  *   WF4: Health Monitor & Alerting (cron → /api/health → alert)
  *   WF5: Weekly Pipeline Report (cron → aggregate → email summary)
@@ -295,7 +295,7 @@ Rules:
 - No generic flattery
 - Sign off as "The Recruiting Team"\`;
 
-// Also build a voice script for ElevenLabs (shorter, conversational)
+// Also build a voice script for Kokoro TTS (shorter, conversational)
 const voiceScript = \`Hi \${candidate.split(' ')[0]}, this is a quick message from the recruiting team at \${companyName}. \${urgency} for the \${jobTitle} role. Your experience in \${topStrengths || 'the relevant areas'} really stood out to us. We'd love to schedule a quick chat — check your email for details. Looking forward to connecting!\`;
 
 return [{ json: { 

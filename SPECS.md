@@ -26,10 +26,12 @@
   Next.js app                     n8n (Docker container)
   talentflow-ai.vercel.app        NocoDB (Docker container)
        |                          PostgreSQL (Docker container)
+       |                          Kokoro-82M TTS (Docker container)
        |                          cloudflared (Docker container)
        |                              |
-       +--- HTTPS ----> n8n.elunari.uk (port 5678)
-       +--- HTTPS ----> db.elunari.uk  (port 8080)
+       +--- HTTPS ----> n8n.elunari.uk  (port 5678)
+       +--- HTTPS ----> db.elunari.uk   (port 8080)
+       +--- HTTPS ----> tts.elunari.uk  (port 8880)
 ```
 
 ### Public URLs
@@ -38,6 +40,7 @@
 |---------|-----|--------------|
 | n8n | `https://n8n.elunari.uk` | 5678 |
 | NocoDB (CRM) | `https://db.elunari.uk` | 8080 |
+| Kokoro TTS | `https://tts.elunari.uk` | 8880 |
 | App (Vercel) | `https://talentflow-ai.vercel.app` | — |
 
 ---
@@ -49,7 +52,7 @@
 | **n8n** | n8n Community (Docker on T480) | $0/mo | Self-hosted on spare ThinkPad T480 |
 | **AirTable** | NocoDB (Docker on T480) | $0/mo | Open-source AirTable alternative, self-hosted |
 | **OpenAI / Claude** | OpenRouter (free models) | $0/mo | Llama 3.3 70B, DeepSeek, Qwen, Gemma — GPT-4o-mini fallback ($0.15/1M tokens) |
-| **ElevenLabs** | ElevenLabs (free tier) | $0/mo | 10,000 chars/month for voice outreach demos |
+| **ElevenLabs** | Kokoro-82M TTS (Docker on T480) | $0/mo | Self-hosted, unlimited — replaces paid ElevenLabs |
 | **HubSpot / CRM** | NocoDB Candidates table | $0/mo | Same schema as AirTable was using |
 | **Make.com / Zapier** | n8n workflows | $0/mo | 5 workflows: intake, outreach, sync, health, report |
 | **Google Data Studio** | Built-in dashboard | $0/mo | Automations page with live metrics |
@@ -99,6 +102,20 @@
 | **Fallback** | Automatic model routing | Single provider | Single provider |
 | **Verdict** | Best value — free models for most tasks, paid fallback only when needed |
 
+### Kokoro-82M vs ElevenLabs vs Amazon Polly
+
+| Factor | Kokoro-82M (Our Choice) | ElevenLabs | Amazon Polly |
+|--------|-------------------------|------------|--------------|
+| **Cost** | $0/mo (self-hosted) | $5/mo (Starter), $22/mo (Creator) | $4/1M chars |
+| **Free tier** | Unlimited (self-hosted) | 10,000 chars/month | 1M chars first year |
+| **Voice quality** | Natural, 82M param model | Premium, industry-leading | Good, robotic on Standard |
+| **Voices** | 67 voices (multi-accent) | 1000+ voices, cloning | 60+ voices |
+| **Self-hosting** | Yes (Docker, CPU-only) | No (SaaS only) | No (AWS only) |
+| **API** | OpenAI-compatible | Proprietary | AWS SDK |
+| **Latency** | ~1-3s (local network) | ~1-2s (cloud) | ~0.5-1s (AWS) |
+| **Data privacy** | 100% on-premises | Their servers | AWS servers |
+| **Verdict** | Best for self-hosting — unlimited free TTS, good quality, OpenAI-compatible API, zero vendor lock-in |
+
 ### Self-Hosting (T480) vs VPS vs Cloud Managed Services
 
 | Factor | Self-Host T480 (Our Choice) | VPS (Hetzner) | Cloud Managed |
@@ -137,19 +154,34 @@
 - **Used by**: n8n (workflow data), NocoDB (table data)
 - **Data**: Docker volume (`postgres_data`)
 
+### Kokoro-82M TTS (Voice AI)
+- **Location**: ThinkPad T480 (Docker container)
+- **URL**: `https://tts.elunari.uk`
+- **Image**: `ghcr.io/remsky/kokoro-fastapi-cpu:latest`
+- **Port**: 8880
+- **Model**: Kokoro-82M (82M parameter TTS model)
+- **API**: OpenAI-compatible (`POST /v1/audio/speech`, `GET /v1/audio/voices`)
+- **Voices**: 67 voices across American/British/European/Asian categories
+- **Default voice**: `af_heart` (American Female)
+- **Why Kokoro**: Open-source TTS with unlimited usage ($0/mo). ElevenLabs free tier caps at 10,000 chars/month and paid plans cost $5–99/mo. Kokoro-82M produces natural speech, supports multiple voices, and is fully self-hosted.
+- **Replaces**: ElevenLabs (paid SaaS, limited free tier)
+- **Cost**: $0/mo (self-hosted, unlimited characters)
+
 ### Cloudflare Tunnel
 - **Location**: ThinkPad T480 (Docker container)
 - **Setup**: `docker compose up -d` with tunnel token
 - **Routes**:
   - `n8n.elunari.uk` → `http://n8n:5678`
   - `db.elunari.uk` → `http://nocodb:8080`
+  - `tts.elunari.uk` → `http://kokoro:8880`
   - `talentflow-ai.elunari.uk` → Vercel (DNS CNAME, not tunneled)
 
 ### Next.js App (Frontend + API)
 - **Hosting**: Vercel (free tier)
 - **Framework**: Next.js 16, React 19, Tailwind 4
-- **API Routes**: 12 endpoints (parse, score, questions, apply, n8n/*, airtable, elevenlabs, health, models)
+- **API Routes**: 12 endpoints (parse, score, questions, apply, n8n/*, airtable, tts, health, models)
 - **The `/api/airtable` route** → now calls NocoDB API instead of AirTable cloud
+- **The `/api/elevenlabs/tts` route** → now calls Kokoro-82M API instead of ElevenLabs cloud
 
 ---
 
@@ -169,8 +201,8 @@ NOCODB_URL=https://db.elunari.uk
 NOCODB_API_TOKEN=...                     # Generated in NocoDB Settings → API Tokens
 NOCODB_TABLE_ID=...                      # Candidates table ID
 
-# ElevenLabs
-ELEVENLABS_API_KEY=sk_...
+# Kokoro TTS (self-hosted on T480)
+KOKORO_TTS_URL=https://tts.elunari.uk
 
 # Cloudflare
 CLOUDFLARE_TUNNEL_TOKEN=...
@@ -187,8 +219,10 @@ APP_URL=https://talentflow-ai.vercel.app
 |------|---------|
 | `n8n/provision.mjs` | Creates all 5 n8n workflows via API |
 | `lib/nocodb.ts` | NocoDB client (replaces `lib/airtable.ts`) |
+| `lib/kokoro.ts` | Kokoro-82M TTS client (replaces `lib/elevenlabs.ts`) |
 | `lib/n8n.ts` | n8n webhook client |
 | `app/api/airtable/route.ts` | API route for CRM operations (now backed by NocoDB) |
+| `app/api/elevenlabs/tts/route.ts` | TTS API route (now backed by Kokoro-82M) |
 | `app/automations/page.tsx` | Dashboard showing all integrations |
 | `components/ArchitectureFlow.tsx` | System architecture diagram |
 | `SPECS.md` | This file |

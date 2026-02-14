@@ -72,7 +72,7 @@ function makeNodes(layout: LayoutMode, styles: ReturnType<typeof getStyles>): No
       { id: "pipeline", position: { x: col1, y: row(0) }, data: { label: nodeLabel("📄 /pipeline", "Upload → Parse → Score → Questions") }, type: "default", style: frontendStyle },
       { id: "health", position: { x: col1, y: row(1) }, data: { label: nodeLabel("🩺 /api/health", "Uptime • AI metrics • Error rates") }, type: "default", style: frontendStyle },
       { id: "automations", position: { x: col1, y: row(2) }, data: { label: nodeLabel("⚙️ /automations", "Dashboard • Test workflows • Audio") }, type: "default", style: frontendStyle },
-      { id: "api", position: { x: col1, y: row(3) }, data: { label: nodeLabel("🔌 API Layer", "/api/n8n/sync • outreach • report\n/api/elevenlabs/tts • /api/nocodb") }, type: "default", style: frontendStyle },
+      { id: "api", position: { x: col1, y: row(3) }, data: { label: nodeLabel("🔌 API Layer", "/api/n8n/sync • outreach • report\n/api/tts • /api/nocodb") }, type: "default", style: frontendStyle },
       { id: "wf1", position: { x: col2, y: row(0) }, data: { label: nodeLabel("WF1 Candidate Intake", "Route by score • Alerts") }, type: "default", style: workflowStyle },
       { id: "wf2", position: { x: col2, y: row(1) }, data: { label: nodeLabel("WF2 Smart Outreach", "Personalized email + voice") }, type: "default", style: workflowStyle },
       { id: "wf3", position: { x: col2, y: row(2) }, data: { label: nodeLabel("WF3 Data Sync", "NocoDB push \u2022 Tracker") }, type: "default", style: workflowStyle },
