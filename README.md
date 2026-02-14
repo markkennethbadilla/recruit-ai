@@ -31,7 +31,7 @@ AI-powered candidate screening pipeline with n8n workflow orchestration. Upload 
 ### Architecture
 
 ```
-TalentFlow (Vercel)                   Server Laptop (native Windows)
+TalentFlow (Vercel)                   ThinkPad T480 (Ubuntu + Docker)
 +---------------------------+        +----------------------------+
 | /pipeline                 | -----> | WF1: Candidate Intake      |
 | /api/health               | <----- | WF4: Health Monitor        |
@@ -40,6 +40,8 @@ TalentFlow (Vercel)                   Server Laptop (native Windows)
 | /api/n8n/report           | -----> | WF5: Pipeline Report       |
 | /automations              |        | n8n @ n8n.elunari.uk       |
 +---------------------------+        | NocoDB @ db.elunari.uk     |
+                                     | PostgreSQL (shared DB)     |
+                                     | Cloudflare Tunnel          |
                                      +----------------------------+
 ```
 
@@ -49,19 +51,24 @@ TalentFlow (Vercel)                   Server Laptop (native Windows)
 - Framer Motion (animations)
 - OpenRouter (LLM API — Llama 3.3 70B, Gemma 3 27B, Mistral Small 3.1)
 - Tailwind CSS 4
-- n8n (workflow orchestration, native Windows on server laptop)
-- NocoDB (self-hosted CRM, replaces AirTable)
+- n8n (workflow orchestration, Docker on ThinkPad T480)
+- NocoDB (self-hosted CRM, replaces AirTable, Docker on T480)
+- PostgreSQL 16 (shared database for n8n + NocoDB, Docker on T480)
 - Cloudflare Tunnel (routes n8n.elunari.uk / db.elunari.uk)
-- Vercel (hosting)
+- Vercel (frontend hosting)
 - Cloudflare (DNS)
+- **Total monthly cost: $0** (self-hosted on spare hardware + free tiers)
 
 ## Getting Started
 
 ### Quick Start (Server Setup)
 
-```powershell
-# Run on the server laptop to install n8n + NocoDB + cloudflared
-.\server-setup.ps1
+```bash
+# On the ThinkPad T480 (Ubuntu 24.04)
+# All services run in Docker at /opt/elunari/
+ssh mkb@192.168.1.35
+cd /opt/elunari
+docker compose up -d
 ```
 
 ### Quick Start (Local Dev)
@@ -77,8 +84,8 @@ npm run dev
 # 1. Install dependencies
 npm install
 
-# 2. Set up the server laptop (n8n + NocoDB + Cloudflare Tunnel)
-# Copy server-setup.ps1 to the server and run it
+# 2. Set up the ThinkPad T480 server (n8n + NocoDB + PostgreSQL + Cloudflare Tunnel)
+# SSH into the T480 and run docker compose up -d at /opt/elunari/
 
 # 3. Provision n8n workflows
 node n8n/provision.mjs
