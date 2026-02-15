@@ -16,8 +16,9 @@ function buildEmailPrompt(params: {
   jobTitle: string;
   companyName: string;
   strengths: string[];
+  recruiterName?: string;
 }): string {
-  const { candidateName, score, jobTitle, companyName, strengths } = params;
+  const { candidateName, score, jobTitle, companyName, strengths, recruiterName } = params;
   return [
     `Write a personalized recruiting outreach email.`,
     `Candidate: ${candidateName}`,
@@ -25,6 +26,7 @@ function buildEmailPrompt(params: {
     `Role: ${jobTitle}`,
     `Company: ${companyName}`,
     `Key strengths: ${strengths.join(", ")}`,
+    recruiterName ? `Recruiter name (sign the email as): ${recruiterName}` : "",
     `Tone: warm, genuine, like texting a friend about a cool opportunity`,
     ``,
     `Rules:`,
@@ -37,7 +39,8 @@ function buildEmailPrompt(params: {
     `- No "header: description" list patterns`,
     `- Sound like a real person, not a marketing email`,
     `- Open with something specific about them, not a generic greeting`,
-  ].join("\n");
+    recruiterName ? `- End with a casual sign-off using the recruiter name: ${recruiterName}` : "",
+  ].filter(Boolean).join("\n");
 }
 
 export async function POST(request: NextRequest) {
@@ -48,7 +51,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { candidateName, candidateEmail, overallScore, strengths, gaps, jobTitle, companyName } = body;
+    const { candidateName, candidateEmail, overallScore, strengths, gaps, jobTitle, companyName, recruiterName, recruiterEmail } = body;
 
     if (!candidateName) {
       return NextResponse.json({ error: "Missing candidateName" }, { status: 400 });
@@ -100,6 +103,7 @@ export async function POST(request: NextRequest) {
       jobTitle: jobTitle || "Open Position",
       companyName: companyName || "WeAssist",
       strengths: strengths || [],
+      recruiterName: recruiterName || undefined,
     });
 
     // Prefer n8n-generated prompt, fallback to our local anti-AI version
@@ -131,6 +135,8 @@ export async function POST(request: NextRequest) {
         companyName: companyName || "WeAssist",
         hasVoiceMessage: tts.success && Boolean(tts.audioBase64),
         strengths: strengths || [],
+        recruiterName: recruiterName || undefined,
+        recruiterEmail: recruiterEmail || undefined,
       });
 
       // Build attachments (Kokoro voice message if available)
@@ -154,6 +160,7 @@ export async function POST(request: NextRequest) {
         subject,
         html,
         text: generatedEmail,
+        replyTo: recruiterEmail || undefined,
         attachments: attachments.length > 0 ? attachments : undefined,
       });
     }

@@ -100,15 +100,19 @@ export function buildOutreachHTML(
     companyName?: string;
     hasVoiceMessage?: boolean;
     strengths?: string[];
+    recruiterName?: string;
+    recruiterEmail?: string;
   }
 ): string {
-  const { score, jobTitle, companyName, hasVoiceMessage, strengths } = options || {};
+  const { score, jobTitle, companyName, hasVoiceMessage, strengths, recruiterName, recruiterEmail } = options || {};
 
   // Sanitize all user-supplied strings to prevent HTML injection
   const safeName = escapeHtml(candidateName);
   const firstName = escapeHtml(candidateName.split(" ")[0]);
   const safeJobTitle = escapeHtml(jobTitle || "Position");
   const safeCompanyName = escapeHtml(companyName || "WeAssist");
+  const safeRecruiterName = recruiterName ? escapeHtml(recruiterName) : "";
+  const replyEmail = recruiterEmail && recruiterEmail.includes("@") ? recruiterEmail : FROM_EMAIL;
 
   // Convert line breaks to paragraphs (sanitize email body content)
   const paragraphs = emailBody
@@ -245,10 +249,11 @@ export function buildOutreachHTML(
           <!-- CTA -->
           <tr>
             <td style="background: #ffffff; padding: 8px 32px 32px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+              ${safeRecruiterName ? `<p style="margin: 0 0 12px; font-size: 14px; color: #374151;">Best,<br><strong>${safeRecruiterName}</strong></p>` : ""}
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 16px 0 0;">
                 <tr>
                   <td style="background: linear-gradient(135deg, #7c3aed, #3b82f6); border-radius: 10px; text-align: center;">
-                    <a href="mailto:${FROM_EMAIL}?subject=Re:%20${encodeURIComponent((jobTitle || "Opportunity") + " at " + (companyName || "WeAssist"))}" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.3px;">
+                    <a href="mailto:${replyEmail}?subject=Re:%20${encodeURIComponent((jobTitle || "Opportunity") + " at " + (companyName || "WeAssist"))}" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.3px;">
                       I'm Interested &rarr;
                     </a>
                   </td>

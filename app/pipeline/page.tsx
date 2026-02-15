@@ -61,6 +61,7 @@ import { openPrintReport } from "@/lib/print-report";
 import { JD_TEMPLATES } from "@/lib/jd-templates";
 import { useTheme } from "@/lib/theme";
 import { PageTips, TipsToggle, usePageTips } from "@/lib/tips";
+import { getRecruiterIdentity, setRecruiterIdentity, type RecruiterIdentity } from "@/lib/recruiter-identity";
 
 // Free models shown in UI (matching portfolio setup)
 const MODELS = [
@@ -222,9 +223,17 @@ export default function PipelinePage() {
   const [rateLimitedModels, setRateLimitedModels] = useState<string[]>([]);
   const { theme, toggleTheme } = useTheme();
   const pipelineTips = usePageTips("pipeline");
+  const [recruiter, setRecruiter] = useState<RecruiterIdentity | null>(null);
+  const [showRecruiterModal, setShowRecruiterModal] = useState(false);
+  const [recruiterForm, setRecruiterForm] = useState({ name: "", email: "" });
 
   useEffect(() => {
     setHistory(getHistory());
+    const stored = getRecruiterIdentity();
+    if (stored) {
+      setRecruiter(stored);
+      setRecruiterForm(stored);
+    }
   }, []);
 
   // Poll rate-limited model status every 30s
@@ -552,6 +561,8 @@ export default function PipelinePage() {
             gaps: scoringResult.gaps || [],
             jobTitle: jobDescription.split("\n")[0].substring(0, 60),
             companyName: "WeAssist",
+            recruiterName: recruiter?.name || "",
+            recruiterEmail: recruiter?.email || "",
           }),
         }).then(r => r.json()).catch(() => ({ success: false, error: "Outreach failed" })),
       ]);
@@ -651,6 +662,102 @@ export default function PipelinePage() {
       </div>
       <div className="fixed top-3 sm:top-4 right-3 sm:right-5 z-50 flex items-center gap-1 sm:gap-2">
         <TipsToggle />
+        {/* Recruiter Identity */}
+        <div className="relative">
+          <button
+            onClick={() => setShowRecruiterModal(!showRecruiterModal)}
+            className={cn(
+              "glass-chip flex items-center gap-1.5 px-2 sm:px-3 py-2 rounded-xl transition-all hover:scale-105 group text-sm",
+              recruiter ? "ring-1 ring-emerald-500/40" : "ring-1 ring-amber-500/40"
+            )}
+            title={recruiter ? `Signed in as ${recruiter.name}` : "Set your identity"}
+          >
+            <User className={cn(
+              "w-4 h-4 transition-colors",
+              recruiter ? "text-emerald-400 group-hover:text-emerald-300" : "text-amber-400 group-hover:text-amber-300"
+            )} />
+            <span className="hidden sm:inline text-xs truncate max-w-[80px]">
+              {recruiter ? recruiter.name.split(" ")[0] : "Who are you?"}
+            </span>
+          </button>
+          <AnimatePresence>
+            {showRecruiterModal && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="absolute right-0 top-full mt-2 w-72 glass-card-solid p-4 shadow-xl z-50 overflow-hidden"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)]">Your Identity</h3>
+                  <button onClick={() => setShowRecruiterModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-[11px] text-[var(--text-muted)] mb-3">
+                  Outreach emails will use your name and reply-to your email.
+                </p>
+                <div className="space-y-2">
+                  <div className="relative">
+                    <User className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-muted)]" />
+                    <input
+                      type="text"
+                      placeholder="Your name"
+                      value={recruiterForm.name}
+                      onChange={(e) => setRecruiterForm(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full pl-8 pr-3 py-2 text-sm rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                    />
+                  </div>
+                  <div className="relative">
+                    <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-muted)]" />
+                    <input
+                      type="email"
+                      placeholder="Your email"
+                      value={recruiterForm.email}
+                      onChange={(e) => setRecruiterForm(prev => ({ ...prev, email: e.target.value }))}
+                      className="w-full pl-8 pr-3 py-2 text-sm rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => {
+                      if (recruiterForm.name.trim() && recruiterForm.email.includes("@")) {
+                        const identity = { name: recruiterForm.name.trim(), email: recruiterForm.email.trim() };
+                        setRecruiterIdentity(identity);
+                        setRecruiter(identity);
+                        setShowRecruiterModal(false);
+                      }
+                    }}
+                    disabled={!recruiterForm.name.trim() || !recruiterForm.email.includes("@")}
+                    className="flex-1 py-2 text-xs font-medium rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-500 hover:to-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                  >
+                    {recruiter ? "Update" : "Save"}
+                  </button>
+                  {recruiter && (
+                    <button
+                      onClick={() => {
+                        setRecruiter(null);
+                        setRecruiterForm({ name: "", email: "" });
+                        localStorage.removeItem("talentflow-recruiter");
+                        setShowRecruiterModal(false);
+                      }}
+                      className="px-3 py-2 text-xs font-medium rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                {recruiter && (
+                  <div className="mt-2 flex items-center gap-1.5 text-[10px] text-emerald-400">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Emails will reply to {recruiter.email}</span>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
         <Link
           href="/automations"
           className="glass-chip flex items-center gap-1.5 px-2 sm:px-3 py-2 rounded-xl transition-all hover:scale-105 group text-sm"
